@@ -1,0 +1,21 @@
+# Git metadata accidentally left from the old frontend repository
+.git-backup/
+
+# Dependencies
+node_modules/
+
+# Angular build output
+dist/
+
+# Angular cache
+.angular/
+
+# Environment variables
+.env
+.env.*
+
+# Keep the example environment file
+!.env.example
+
+# Logs
+*.log
