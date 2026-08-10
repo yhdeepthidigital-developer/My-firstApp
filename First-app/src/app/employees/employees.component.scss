@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.panel {
+  padding: 1.5rem;
+}
+
+.table-responsive {
+  margin-top: 1.5rem;
+}
+
+.btn-link {
+  text-decoration: none;
+}
+
+.badge {
+  font-size: 0.9rem;
+}
+
+.badge.text-bg-active {
+  background-color: #cfe2ff;
+  color: #084298 !important;
+}
+
+.badge.text-bg-on-leave {
+  background-color: #fff3cd;
+  color: #664d03 !important;
+}
+
+.badge.text-bg-remote {
+  background-color: #d1e7dd;
+  color: #0f5132 !important;
+}
+
+.badge:hover {
+  opacity: 0.9;
+}

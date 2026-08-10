@@ -1,0 +1,82 @@
+<section class="panel p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Operations</p>
+      <h2 class="mb-0">Employee Management</h2>
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger mb-4">{{ errorMessage() }}</div>
+  }
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">Name</label>
+      <input class="form-control" type="text" [(ngModel)]="form.name" (input)="clearError()" placeholder="Enter employee name" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Role</label>
+      <input class="form-control" type="text" [(ngModel)]="form.role" (input)="clearError()" placeholder="Enter role" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Department</label>
+      <input class="form-control" type="text" [(ngModel)]="form.department" (input)="clearError()" placeholder="Enter department" />
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Email</label>
+      <input class="form-control" type="email" [(ngModel)]="form.email" (input)="clearError()" placeholder="Enter email" />
+    </div>
+    @if (editingId) {
+      <div class="col-md-6">
+        <label class="form-label">Status</label>
+        <select class="form-select" [(ngModel)]="form.status" (change)="clearError()">
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Remote">Remote</option>
+        </select>
+      </div>
+    }
+  </div>
+
+  <div class="d-flex gap-2 mt-4">
+    <button class="btn btn-primary" type="button" (click)="saveEmployee()">
+      {{ editingId ? 'Update Employee' : 'Add Employee' }}
+    </button>
+    @if (editingId) {
+      <button class="btn btn-outline-secondary" type="button" (click)="resetForm()">Cancel</button>
+    }
+  </div>
+
+  <div class="table-responsive mt-4">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Department</th>
+          <th>Email</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (employee of displayedEmployees; track employee.id) {
+          <tr>
+            <td>{{ employee.name }}</td>
+            <td>{{ employee.role }}</td>
+            <td>{{ employee.department }}</td>
+            <td>{{ employee.email }}</td>
+            <td>
+              <span class="badge rounded-pill text-bg-{{ employee.status.toLowerCase().replace(' ', '-') }}">{{ employee.status }}</span>
+            </td>
+            <td>
+              <button class="btn btn-link p-0 me-2" type="button" (click)="editEmployee(employee)">Edit</button>
+              <button class="btn btn-link text-danger p-0" type="button" (click)="deleteEmployee(employee.id)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

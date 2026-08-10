@@ -1,0 +1,52 @@
+<section class="panel p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Tracking</p>
+      <h2 class="mb-0">Attendance List</h2>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <label class="form-label">Employee Name</label>
+      <input class="form-control" type="text" [(ngModel)]="employeeNameFilter" placeholder="Search by employee" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Date</label>
+      <input class="form-control" type="date" [(ngModel)]="dateFilter" />
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Status</label>
+      <select class="form-select" [(ngModel)]="statusFilter">
+        <option value="">All</option>
+        <option value="Present">Present</option>
+        <option value="Absent">Absent</option>
+        <option value="Late">Late</option>
+        <option value="Holiday">Holiday</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Date</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (record of filteredAttendance; track record.id) {
+          <tr>
+            <td>{{ getEmployeeName(record.employeeId) }}</td>
+            <td>{{ record.date }}</td>
+            <td>
+              <span class="badge rounded-pill text-bg-{{ record.status.toLowerCase() }}">{{ record.status }}</span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

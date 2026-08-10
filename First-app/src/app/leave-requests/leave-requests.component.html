@@ -1,0 +1,50 @@
+<section class="panel p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Admin</p>
+      <h2 class="mb-0">Leave Requests</h2>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (request of requests; track request.id) {
+          <tr>
+            <td>{{ request.employeeName }}</td>
+            <td>{{ request.startDate }}</td>
+            <td>{{ request.endDate }}</td>
+            <td>{{ request.reason }}</td>
+            <td>
+              <span class="badge rounded-pill" [ngClass]="{
+                'text-bg-warning': request.status === 'Pending',
+                'text-bg-success': request.status === 'Approved',
+                'text-bg-danger': request.status === 'Rejected'
+              }">{{ request.status }}</span>
+            </td>
+            <td>
+              @if (request.status === 'Pending') {
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-success" type="button" (click)="approveRequest(request)">Approve</button>
+                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="rejectRequest(request)">Reject</button>
+                </div>
+              } @else {
+                <span class="text-muted small">Processed</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

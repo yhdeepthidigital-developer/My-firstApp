@@ -1,0 +1,37 @@
+:host {
+  display: block;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff !important;
+}
+
+.content-area {
+  overflow: auto;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px rgba(18, 32, 51, 0.08);
+}
+
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+}

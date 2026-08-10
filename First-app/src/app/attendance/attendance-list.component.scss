@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.table-responsive {
+  margin-top: 1rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 0.9rem;
+}
+
+.badge.text-bg-present {
+  background-color: #d1e7dd;
+  color: #0f5132 !important;
+}
+
+.badge.text-bg-absent {
+  background-color: #f8d7da;
+  color: #842029 !important;
+}
+
+.badge.text-bg-late {
+  background-color: #fff3cd;
+  color: #664d03 !important;
+}
+
+.badge.text-bg-holiday {
+  background-color: #e2e3e5;
+  color: #41464b !important;
+}
+
+.badge:hover {
+  opacity: 0.9;
+}

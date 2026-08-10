@@ -1,0 +1,43 @@
+<section class="panel p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Overview</p>
+      <h2 class="mb-0">Employee Dashboard</h2>
+    </div>
+  </div>
+
+  <div class="row g-3 dashboard-summary">
+    <article class="col-md-4">
+      <a class="card card-link border-0 bg-primary-subtle h-100 text-decoration-none text-reset" routerLink="/employees">
+        <div class="card-body">
+          <div class="text-secondary small text-uppercase">Total Employees</div>
+          <div class="display-6 fw-semibold">{{ totals().totalEmployees }}</div>
+        </div>
+      </a>
+    </article>
+    <article class="col-md-4">
+      <a class="card card-link border-0 bg-success-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'Active' }">
+        <div class="card-body">
+          <div class="text-secondary small text-uppercase">Active Staff</div>
+          <div class="display-6 fw-semibold">{{ totals().activeEmployees }}</div>
+        </div>
+      </a>
+    </article>
+    <article class="col-md-4">
+      <a class="card card-link border-0 bg-warning-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'Remote' }">
+        <div class="card-body">
+          <div class="text-secondary small text-uppercase">Remote Staff</div>
+          <div class="display-6 fw-semibold">{{ totals().remoteEmployees }}</div>
+        </div>
+      </a>
+    </article>
+    <article class="col-md-4">
+      <a class="card card-link border-0 bg-info-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'On Leave' }">
+        <div class="card-body">
+          <div class="text-secondary small text-uppercase">On Leave</div>
+          <div class="display-6 fw-semibold">{{ totals().onLeaveEmployees }}</div>
+        </div>
+      </a>
+    </article>
+  </div>
+</section>
