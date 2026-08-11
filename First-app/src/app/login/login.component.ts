@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
@@ -19,6 +19,7 @@ export class LoginComponent {
 
   protected login(): void {
     if (this.email.trim() === 'admin@company.com' && this.password.trim() === 'admin123') {
+      localStorage.setItem('userRole', 'admin');
       localStorage.setItem('adminLoggedIn', 'true');
       this.router.navigateByUrl('/');
       return;

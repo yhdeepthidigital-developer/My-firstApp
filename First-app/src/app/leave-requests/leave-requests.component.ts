@@ -1,17 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { EmployeeService } from '../employee.service';
-
-export interface LeaveRequest {
-  id: number;
-  employeeId: number;
-  employeeName: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-}
+import { EmployeeService, LeaveRequest } from '../employee.service';
 
 @Component({
   selector: 'app-leave-requests',
@@ -23,36 +13,21 @@ export interface LeaveRequest {
 export class LeaveRequestsComponent {
   private readonly employeeService = inject(EmployeeService);
 
-  protected requests: LeaveRequest[] = [
-    {
-      id: 1,
-      employeeId: 4,
-      employeeName: 'Liam Phillips',
-      startDate: '2026-08-10',
-      endDate: '2026-08-12',
-      reason: 'Medical appointment',
-      status: 'Pending'
-    },
-    {
-      id: 2,
-      employeeId: 2,
-      employeeName: 'Noah Brooks',
-      startDate: '2026-08-15',
-      endDate: '2026-08-16',
-      reason: 'Personal work',
-      status: 'Pending'
-    }
-  ];
+  protected readonly requests = this.employeeService.leaveRequests;
 
   protected approveRequest(request: LeaveRequest): void {
-    request.status = 'Approved';
+    this.updateStatus(request, 'Approved');
   }
 
   protected rejectRequest(request: LeaveRequest): void {
-    request.status = 'Rejected';
+    this.updateStatus(request, 'Rejected');
   }
 
   protected getEmployeeName(employeeId: number): string {
     return this.employeeService.employees().find((employee) => employee.id === employeeId)?.name ?? 'Unknown Employee';
+  }
+
+  private updateStatus(request: LeaveRequest, status: LeaveRequest['status']): void {
+    this.requests.update((current) => current.map((item) => item.id === request.id ? { ...item, status } : item));
   }
 }

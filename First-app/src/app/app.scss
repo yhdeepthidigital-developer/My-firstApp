@@ -10,6 +10,29 @@
   width: 260px;
 }
 
+.employee-sidebar {
+  background: #173f43;
+}
+
+.employee-sidebar .brand-block p {
+  color: #b9eee4 !important;
+}
+
+.employee-sidebar .nav-link {
+  color: #b8d0d0 !important;
+}
+
+.employee-sidebar .nav-link.active {
+  background: #0e8f8a;
+  color: #ffffff !important;
+}
+
+.employee-sidebar .btn-outline-light:hover {
+  color: #173f43;
+  background: #b9eee4;
+  border-color: #b9eee4;
+}
+
 .nav-link.active {
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff !important;

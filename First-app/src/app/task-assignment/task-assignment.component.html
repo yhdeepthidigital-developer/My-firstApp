@@ -1,0 +1,96 @@
+<section class="assignment-page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Admin workspace</p>
+      <h2>Task assignment</h2>
+      <p class="muted">Give employees clear work and keep every handoff visible.</p>
+    </div>
+    <div class="task-count"><strong>{{ employeeTaskCount }}</strong><span>total tasks</span></div>
+  </div>
+
+  <div class="metrics-grid" aria-label="Task overview">
+    <article><span class="metric-dot pending"></span><div><strong>{{ pendingTaskCount }}</strong><small>Pending</small></div></article>
+    <article><span class="metric-dot active"></span><div><strong>{{ activeTaskCount }}</strong><small>In progress</small></div></article>
+    <article><span class="metric-dot completed"></span><div><strong>{{ completedTaskCount }}</strong><small>Completed</small></div></article>
+    <article><span class="metric-dot overdue"></span><div><strong>{{ overdueTaskCount }}</strong><small>Needs attention</small></div></article>
+  </div>
+
+  <div class="assignment-layout">
+    <form class="assignment-form" (ngSubmit)="assignTask()" novalidate>
+      <div class="section-heading">
+        <div>
+          <p class="section-kicker">Create assignment</p>
+          <h3>New task</h3>
+        </div>
+        <span class="form-mark" aria-hidden="true">+</span>
+      </div>
+      <p class="muted">Add the details an employee needs to get started.</p>
+
+      @if (errorMessage) { <div class="alert alert-danger" role="alert">{{ errorMessage }}</div> }
+      @if (successMessage()) { <div class="alert alert-success" role="status">{{ successMessage() }}</div> }
+
+      <div class="field-group">
+        <label for="assigned-employee">Assign to</label>
+        <select id="assigned-employee" name="employeeId" [(ngModel)]="form.employeeId" required>
+          <option [ngValue]="0">Choose an employee</option>
+          @for (employee of employees(); track employee.id) {
+            <option [ngValue]="employee.id">{{ employee.name }} · {{ employee.department }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label for="task-title">Task title</label>
+        <input id="task-title" name="title" type="text" [(ngModel)]="form.title" placeholder="e.g. Prepare weekly report" required />
+      </div>
+
+      <div class="field-group">
+        <label for="task-detail">Instructions</label>
+        <textarea id="task-detail" name="detail" [(ngModel)]="form.detail" rows="4" placeholder="Add optional context or expectations"></textarea>
+      </div>
+
+      <div class="field-group">
+        <label for="task-due-date">Due date</label>
+        <input id="task-due-date" name="dueDate" type="date" [(ngModel)]="form.dueDate" required />
+      </div>
+
+      <button class="assign-button" type="submit">Assign task <span aria-hidden="true">&#8594;</span></button>
+    </form>
+
+    <div class="assigned-list">
+      <div class="list-heading">
+        <div>
+          <p class="section-kicker">Live workload</p>
+          <h3>Current assignments</h3>
+        </div>
+        <span>{{ tasks().length }}</span>
+      </div>
+      @for (task of tasks(); track task.id) {
+        <article class="task-item" [class.is-overdue]="getDueState(task) === 'overdue'" [class.is-completed]="task.status === 'Completed'">
+          <div class="task-item-heading">
+            <div>
+              <h4>{{ task.title }}</h4>
+              <span class="assignee">Assigned to {{ getEmployeeName(task.employeeId) }}</span>
+            </div>
+            <span class="status" [class.in-progress]="task.status === 'In Progress'" [class.completed]="task.status === 'Completed'">{{ task.status }}</span>
+          </div>
+          <p>{{ task.detail }}</p>
+          <footer>
+            <span class="due-date" [class.overdue]="getDueState(task) === 'overdue'" [class.due-today]="getDueState(task) === 'today'">{{ getDueLabel(task) }}</span>
+            @if (task.attachmentName) { <span class="has-attachment">Attachment added</span> }
+          </footer>
+          <div class="tracking-row">
+            <span>Started: {{ task.startedAt ? (task.startedAt | date: 'short') : 'Not started' }}</span>
+            <span>Closed: {{ task.completedAt ? (task.completedAt | date: 'short') : 'Open' }}</span>
+            <span>Time: {{ getTaskDuration(task) }}</span>
+          </div>
+          @if (task.attachmentName) {
+            <a class="attachment-link" [href]="task.attachmentData" [download]="task.attachmentName">Download {{ task.attachmentName }}</a>
+          }
+        </article>
+      } @empty {
+        <p class="muted empty-state">No tasks assigned yet.</p>
+      }
+    </div>
+  </div>
+</section>

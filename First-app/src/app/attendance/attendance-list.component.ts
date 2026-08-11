@@ -12,7 +12,7 @@ import { EmployeeService } from '../employee.service';
 })
 export class AttendanceListComponent {
   private readonly employeeService = inject(EmployeeService);
-  protected readonly attendance = this.employeeService.attendance();
+  protected readonly attendance = this.employeeService.attendance;
   protected employeeNameFilter = '';
   protected dateFilter = '';
   protected statusFilter = '';
@@ -26,7 +26,7 @@ export class AttendanceListComponent {
     const date = this.dateFilter;
     const status = this.statusFilter;
 
-    return this.attendance.filter((record) => {
+    return this.attendance().filter((record) => {
       const employeeName = this.getEmployeeName(record.employeeId).toLowerCase();
       const matchesName = !name || employeeName.includes(name);
       const matchesDate = !date || record.date === date;

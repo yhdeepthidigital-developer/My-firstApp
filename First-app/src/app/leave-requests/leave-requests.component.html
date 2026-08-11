@@ -19,7 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (request of requests; track request.id) {
+        @for (request of requests(); track request.id) {
           <tr>
             <td>{{ request.employeeName }}</td>
             <td>{{ request.startDate }}</td>

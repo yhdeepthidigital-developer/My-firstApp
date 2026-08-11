@@ -1,0 +1,31 @@
+<section class="employee-dashboard">
+  <div class="welcome-row">
+    <div>
+      <p class="eyebrow">Today, {{ now() | date: 'EEEE, MMMM d' }}</p>
+      <h2>Good to see you, {{ employeeDetails?.name }}</h2>
+      <p class="muted">{{ employeeDetails?.role }} · {{ employeeDetails?.department }}</p>
+    </div>
+    <a class="tasks-link" routerLink="/tasks">View my tasks <span aria-hidden="true">&#8594;</span></a>
+  </div>
+
+  <div class="clock-panel">
+    <div>
+      <p class="panel-label">Work session</p>
+      <h3>{{ isClockedIn ? 'You are clocked in' : 'Start your workday' }}</h3>
+      <p class="muted">{{ isClockedIn ? 'Your time is being tracked for today.' : 'Clock in when you begin work.' }}</p>
+    </div>
+    <div class="time-readout">
+      <strong>{{ formatElapsedTime(elapsedSeconds) }}</strong>
+      <span>tracked today</span>
+    </div>
+    <button class="clock-button" [class.clocked-in]="isClockedIn" type="button" (click)="clock()">
+      {{ isClockedIn ? 'Clock out' : 'Clock in' }}
+    </button>
+  </div>
+
+  <div class="summary-grid">
+    <article><span>Clock in</span><strong>{{ currentRecord?.clockIn ? (currentRecord?.clockIn | date: 'shortTime') : '--' }}</strong></article>
+    <article><span>Clock out</span><strong>{{ currentRecord?.clockOut ? (currentRecord?.clockOut | date: 'shortTime') : '--' }}</strong></article>
+    <article><span>Status</span><strong>{{ currentRecord?.status ?? 'Not started' }}</strong></article>
+  </div>
+</section>

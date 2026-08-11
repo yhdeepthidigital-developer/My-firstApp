@@ -12,11 +12,22 @@ export class App {
   protected readonly title = signal('Employee Management');
 
   protected get isLoggedIn(): boolean {
-    return localStorage.getItem('adminLoggedIn') === 'true';
+    return localStorage.getItem('userRole') === 'admin' || localStorage.getItem('adminLoggedIn') === 'true';
+  }
+
+  protected get isEmployee(): boolean {
+    return localStorage.getItem('userRole') === 'employee';
+  }
+
+  protected get employeeName(): string {
+    return localStorage.getItem('employeeName') ?? 'Employee';
   }
 
   protected logout(): void {
     localStorage.removeItem('adminLoggedIn');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('employeeId');
+    localStorage.removeItem('employeeName');
     this.router.navigateByUrl('/login');
   }
 }

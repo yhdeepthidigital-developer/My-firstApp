@@ -1,82 +1,62 @@
-<section class="panel p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<section class="employees-page">
+  <div class="page-heading">
     <div>
-      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Operations</p>
-      <h2 class="mb-0">Employee Management</h2>
+      <p class="eyebrow">People operations</p>
+      <h2>Employee directory</h2>
+      <p class="muted">Invite employees, maintain their profiles, and control availability.</p>
     </div>
+    <div class="directory-count"><strong>{{ employees().length }}</strong><span>people in directory</span></div>
   </div>
 
-  @if (errorMessage()) {
-    <div class="alert alert-danger mb-4">{{ errorMessage() }}</div>
-  }
+  @if (errorMessage()) { <div class="alert alert-danger" role="alert">{{ errorMessage() }}</div> }
+  @if (successMessage()) { <div class="alert alert-success" role="status">{{ successMessage() }}</div> }
 
-  <div class="row g-3">
-    <div class="col-md-4">
-      <label class="form-label">Name</label>
-      <input class="form-control" type="text" [(ngModel)]="form.name" (input)="clearError()" placeholder="Enter employee name" />
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Role</label>
-      <input class="form-control" type="text" [(ngModel)]="form.role" (input)="clearError()" placeholder="Enter role" />
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Department</label>
-      <input class="form-control" type="text" [(ngModel)]="form.department" (input)="clearError()" placeholder="Enter department" />
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">Email</label>
-      <input class="form-control" type="email" [(ngModel)]="form.email" (input)="clearError()" placeholder="Enter email" />
-    </div>
-    @if (editingId) {
-      <div class="col-md-6">
-        <label class="form-label">Status</label>
-        <select class="form-select" [(ngModel)]="form.status" (change)="clearError()">
-          <option value="Active">Active</option>
-          <option value="On Leave">On Leave</option>
-          <option value="Remote">Remote</option>
-        </select>
+  <div class="management-layout">
+    <section class="invite-panel">
+      <div class="section-heading">
+        <div><p class="section-kicker">{{ editingId ? 'Maintain profile' : 'Controlled access' }}</p><h3>{{ editingId ? 'Edit employee' : 'Invite employee' }}</h3></div>
+        <span class="form-mark">{{ editingId ? '&#9998;' : '+' }}</span>
       </div>
-    }
-  </div>
+      <p class="muted">{{ editingId ? 'Keep the employee record accurate and up to date.' : 'Add the employee here, then share their portal login details privately.' }}</p>
 
-  <div class="d-flex gap-2 mt-4">
-    <button class="btn btn-primary" type="button" (click)="saveEmployee()">
-      {{ editingId ? 'Update Employee' : 'Add Employee' }}
-    </button>
-    @if (editingId) {
-      <button class="btn btn-outline-secondary" type="button" (click)="resetForm()">Cancel</button>
-    }
-  </div>
+      <div class="form-grid">
+        <div class="field-group"><label for="employee-name">Full name</label><input id="employee-name" type="text" [(ngModel)]="form.name" (input)="clearError()" placeholder="e.g. Priya Shah" /></div>
+        <div class="field-group"><label for="employee-email">Work email</label><input id="employee-email" type="email" [(ngModel)]="form.email" (input)="clearError()" placeholder="name@company.com" /></div>
+        <div class="field-group"><label for="employee-role">Role</label><input id="employee-role" type="text" [(ngModel)]="form.role" (input)="clearError()" placeholder="e.g. Product Designer" /></div>
+        <div class="field-group"><label for="employee-department">Department</label><input id="employee-department" type="text" [(ngModel)]="form.department" (input)="clearError()" placeholder="e.g. Design" /></div>
+        @if (editingId) { <div class="field-group full-width"><label for="employee-status">Status</label><select id="employee-status" [(ngModel)]="form.status" (change)="clearError()"><option value="Active">Active</option><option value="On Leave">On Leave</option><option value="Remote">Remote</option></select></div> }
+      </div>
 
-  <div class="table-responsive mt-4">
-    <table class="table table-hover align-middle">
+      @if (!editingId) { <div class="access-note"><strong>Portal access</strong><span>Employee login password: <b>employee123</b></span></div> }
+      <div class="form-actions"><button class="save-button" type="button" (click)="saveEmployee()">{{ editingId ? 'Save changes' : 'Add employee' }} <span aria-hidden="true">&#8594;</span></button>@if (editingId) { <button class="cancel-button" type="button" (click)="resetForm()">Cancel</button> }</div>
+    </section>
+
+    <section class="directory-panel">
+      <div class="list-heading"><div><p class="section-kicker">Managed records</p><h3>Team directory</h3></div><span>{{ displayedEmployees.length }}</span></div>
+      <div class="table-responsive">
+        <table class="table align-middle">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Role</th>
-          <th>Department</th>
-          <th>Email</th>
-          <th>Status</th>
-          <th>Action</th>
+            <th>Employee</th><th>Department</th><th>Status</th><th>Actions</th>
         </tr>
       </thead>
       <tbody>
         @for (employee of displayedEmployees; track employee.id) {
           <tr>
-            <td>{{ employee.name }}</td>
-            <td>{{ employee.role }}</td>
-            <td>{{ employee.department }}</td>
-            <td>{{ employee.email }}</td>
+            <td><div class="employee-cell"><span class="avatar">{{ employee.name.charAt(0) }}</span><div><strong>{{ employee.name }}</strong><small>{{ employee.email }}</small></div></div></td>
+            <td><span class="role-cell">{{ employee.role }}</span><small class="department-cell">{{ employee.department }}</small></td>
             <td>
               <span class="badge rounded-pill text-bg-{{ employee.status.toLowerCase().replace(' ', '-') }}">{{ employee.status }}</span>
             </td>
             <td>
-              <button class="btn btn-link p-0 me-2" type="button" (click)="editEmployee(employee)">Edit</button>
-              <button class="btn btn-link text-danger p-0" type="button" (click)="deleteEmployee(employee.id)">Delete</button>
+              <button class="action-button" type="button" (click)="editEmployee(employee)">Edit</button><button class="action-button delete" type="button" (click)="deleteEmployee(employee.id)">Remove</button>
             </td>
           </tr>
         }
       </tbody>
     </table>
+        </table>
+      </div>
+    </section>
   </div>
 </section>

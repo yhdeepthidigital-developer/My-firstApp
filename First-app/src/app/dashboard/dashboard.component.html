@@ -1,43 +1,46 @@
-<section class="panel p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<section class="admin-dashboard">
+  <div class="dashboard-heading">
     <div>
-      <p class="text-uppercase text-secondary small mb-1 fw-semibold">Overview</p>
-      <h2 class="mb-0">Employee Dashboard</h2>
+      <p class="eyebrow">Admin overview</p>
+      <h2>Good morning, here is your workforce snapshot.</h2>
+      <p class="muted">Monitor people, attendance, tasks, and leave from one place.</p>
     </div>
+    <a class="primary-link" routerLink="/task-assignment">Assign a task <span aria-hidden="true">&#8594;</span></a>
   </div>
 
-  <div class="row g-3 dashboard-summary">
-    <article class="col-md-4">
-      <a class="card card-link border-0 bg-primary-subtle h-100 text-decoration-none text-reset" routerLink="/employees">
-        <div class="card-body">
-          <div class="text-secondary small text-uppercase">Total Employees</div>
-          <div class="display-6 fw-semibold">{{ totals().totalEmployees }}</div>
-        </div>
-      </a>
-    </article>
-    <article class="col-md-4">
-      <a class="card card-link border-0 bg-success-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'Active' }">
-        <div class="card-body">
-          <div class="text-secondary small text-uppercase">Active Staff</div>
-          <div class="display-6 fw-semibold">{{ totals().activeEmployees }}</div>
-        </div>
-      </a>
-    </article>
-    <article class="col-md-4">
-      <a class="card card-link border-0 bg-warning-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'Remote' }">
-        <div class="card-body">
-          <div class="text-secondary small text-uppercase">Remote Staff</div>
-          <div class="display-6 fw-semibold">{{ totals().remoteEmployees }}</div>
-        </div>
-      </a>
-    </article>
-    <article class="col-md-4">
-      <a class="card card-link border-0 bg-info-subtle h-100 text-decoration-none text-reset" routerLink="/employees" [queryParams]="{ status: 'On Leave' }">
-        <div class="card-body">
-          <div class="text-secondary small text-uppercase">On Leave</div>
-          <div class="display-6 fw-semibold">{{ totals().onLeaveEmployees }}</div>
-        </div>
-      </a>
-    </article>
+  <div class="metrics-grid">
+    <a class="metric-card teal" routerLink="/employees"><span>Total employees</span><strong>{{ totals().totalEmployees }}</strong><small>View directory &#8594;</small></a>
+    <a class="metric-card green" routerLink="/employees" [queryParams]="{ status: 'Active' }"><span>Active staff</span><strong>{{ totals().activeEmployees }}</strong><small>{{ totals().remoteEmployees }} remote today</small></a>
+    <a class="metric-card amber" routerLink="/task-assignment"><span>Open tasks</span><strong>{{ taskSummary().pending + taskSummary().inProgress }}</strong><small>{{ taskSummary().inProgress }} currently in progress</small></a>
+    <a class="metric-card coral" routerLink="/leave-requests"><span>Leave requests</span><strong>{{ pendingLeaveCount() }}</strong><small>Awaiting review &#8594;</small></a>
+  </div>
+
+  <div class="dashboard-grid">
+    <section class="dashboard-panel task-panel">
+      <div class="panel-heading"><div><p class="panel-kicker">Workload</p><h3>Task progress</h3></div><a routerLink="/task-assignment">Manage tasks</a></div>
+      <div class="task-progress"><div><span>Pending</span><strong>{{ taskSummary().pending }}</strong></div><div><span>In progress</span><strong>{{ taskSummary().inProgress }}</strong></div><div><span>Completed</span><strong>{{ taskSummary().completed }}</strong></div></div>
+      <div class="progress-track"><span [style.width.%]="taskSummary().total ? (taskSummary().completed / taskSummary().total) * 100 : 0"></span></div>
+      <p class="progress-note">{{ taskSummary().completed }} of {{ taskSummary().total }} assigned tasks completed</p>
+    </section>
+
+    <section class="dashboard-panel attendance-panel">
+      <div class="panel-heading"><div><p class="panel-kicker">Attendance</p><h3>Latest check-in snapshot</h3></div><a routerLink="/attendance">Open attendance</a></div>
+      <div class="attendance-total"><strong>{{ latestAttendance().length }}</strong><span>records on {{ latestAttendanceDate() || 'no date' }}</span></div>
+      <div class="attendance-breakdown"><span><i class="present-dot"></i>{{ latestAttendance().filter(record => record.status === 'Present').length }} present</span><span><i class="late-dot"></i>{{ latestAttendance().filter(record => record.status === 'Late').length }} late</span><span><i class="absent-dot"></i>{{ latestAttendance().filter(record => record.status === 'Absent').length }} absent</span></div>
+    </section>
+
+    <section class="dashboard-panel recent-panel">
+      <div class="panel-heading"><div><p class="panel-kicker">Activity</p><h3>Recent assignments</h3></div><a routerLink="/task-assignment">See all</a></div>
+      @for (task of recentTasks; track task.id) {
+        <div class="recent-task"><div><strong>{{ task.title }}</strong><small>{{ getEmployeeName(task.employeeId) }} · Due {{ task.dueDate }}</small></div><span class="status" [class.progress]="task.status === 'In Progress'" [class.complete]="task.status === 'Completed'">{{ task.status }}</span></div>
+      } @empty { <p class="muted">No tasks assigned yet.</p> }
+    </section>
+
+    <section class="dashboard-panel people-panel">
+      <div class="panel-heading"><div><p class="panel-kicker">People</p><h3>Team availability</h3></div><a routerLink="/employees">Directory</a></div>
+      @for (employee of employees().slice(0, 4); track employee.id) {
+        <div class="person-row"><span class="avatar">{{ employee.name.charAt(0) }}</span><div><strong>{{ employee.name }}</strong><small>{{ employee.role }}</small></div><span class="availability" [class.remote]="employee.status === 'Remote'" [class.leave]="employee.status === 'On Leave'">{{ employee.status }}</span></div>
+      }
+    </section>
   </div>
 </section>

@@ -15,11 +15,13 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
   private readonly employeeService = inject(EmployeeService);
   private readonly route = inject(ActivatedRoute);
   private errorTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly employees = this.employeeService.employees;
   protected filterStatus: string | null = null;
   protected editingId: number | null = null;
   protected errorMessage: WritableSignal<string> = signal('');
+  protected readonly successMessage: WritableSignal<string> = signal('');
   protected form: Omit<Employee, 'id'> = {
     name: '',
     role: '',
@@ -43,6 +45,7 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
   }
 
   protected saveEmployee(): void {
+    this.clearSuccess();
     if (!this.form.name || !this.form.role || !this.form.department || !this.form.email) {
       this.errorMessage.set('Please fill in all required fields before saving.');
       this.scheduleErrorClear();
@@ -55,6 +58,15 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const duplicateEmail = this.employees().some((employee) =>
+      employee.email.toLowerCase() === this.form.email.trim().toLowerCase() && employee.id !== this.editingId
+    );
+    if (duplicateEmail) {
+      this.errorMessage.set('An employee with this email already exists.');
+      this.scheduleErrorClear();
+      return;
+    }
+
     this.clearError();
 
     const employeeToSave = this.editingId !== null
@@ -63,8 +75,10 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
 
     if (this.editingId !== null) {
       this.employeeService.updateEmployee(this.editingId, employeeToSave);
+      this.showSuccess(`${this.form.name.trim()} was updated successfully.`);
     } else {
       this.employeeService.addEmployee(employeeToSave);
+      this.showSuccess(`${this.form.name.trim()} was added. Share the employee portal password: employee123.`);
     }
 
     this.resetForm();
@@ -90,6 +104,22 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
       email: '',
       status: 'Active'
     };
+  }
+
+  protected clearSuccess(): void {
+    this.successMessage.set('');
+    if (this.successTimeoutId !== null) {
+      clearTimeout(this.successTimeoutId);
+      this.successTimeoutId = null;
+    }
+  }
+
+  private showSuccess(message: string): void {
+    this.successMessage.set(message);
+    this.successTimeoutId = window.setTimeout(() => {
+      this.successMessage.set('');
+      this.successTimeoutId = null;
+    }, 4000);
   }
 
   private isValidEmail(email: string): boolean {
@@ -119,5 +149,6 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearErrorTimeout();
+    this.clearSuccess();
   }
 }

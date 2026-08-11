@@ -1,20 +1,36 @@
 <div class="app-shell d-flex min-vh-100">
-  <aside class="sidebar bg-dark text-white p-4">
-    <div class="brand-block mb-4">
-      <p class="text-uppercase text-secondary small mb-2 fw-semibold">Enterprise</p>
-      <h1 class="h3 mb-0">{{ title() }}</h1>
-    </div>
+  @if (isLoggedIn) {
+    <aside class="sidebar bg-dark text-white p-4">
+      <div class="brand-block mb-4">
+        <p class="text-uppercase text-secondary small mb-2 fw-semibold">Enterprise</p>
+        <h1 class="h3 mb-0">{{ title() }}</h1>
+      </div>
 
-    <nav class="nav flex-column gap-2">
-      @if (isLoggedIn) {
+      <nav class="nav flex-column gap-2">
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/employees" routerLinkActive="active">Employees</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/attendance" routerLinkActive="active">Attendance</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/leave-requests" routerLinkActive="active">Leave Requests</a>
+        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/task-assignment" routerLinkActive="active">Assign Tasks</a>
         <button class="btn btn-outline-light btn-sm mt-3" type="button" (click)="logout()">Logout</button>
-      }
-    </nav>
-  </aside>
+      </nav>
+    </aside>
+  }
+
+  @if (isEmployee) {
+    <aside class="sidebar employee-sidebar text-white p-4">
+      <div class="brand-block mb-4">
+        <p class="text-uppercase text-secondary small mb-2 fw-semibold">Employee Portal</p>
+        <h1 class="h3 mb-0">{{ employeeName }}</h1>
+      </div>
+      <nav class="nav flex-column gap-2">
+        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/employee-dashboard" routerLinkActive="active">My Dashboard</a>
+        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/employee-attendance" routerLinkActive="active">My Attendance</a>
+        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/tasks" routerLinkActive="active">My Tasks</a>
+        <button class="btn btn-outline-light btn-sm mt-3" type="button" (click)="logout()">Logout</button>
+      </nav>
+    </aside>
+  }
 
   <main class="content-area flex-grow-1 p-4">
     <router-outlet />

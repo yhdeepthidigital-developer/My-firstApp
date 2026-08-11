@@ -1,0 +1,85 @@
+<section class="tasks-page">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Employee workspace</p>
+      <h2>My task board</h2>
+      <p class="muted">Stay focused on what needs your attention next.</p>
+    </div>
+    <div class="header-stats">
+      <div class="completion-summary" aria-label="Task completion">
+        <strong>{{ completionPercent }}%</strong>
+        <span>complete</span>
+      </div>
+      <div class="attention-summary" [class.has-attention]="attentionCount > 0">
+        <strong>{{ attentionCount }}</strong>
+        <span>needs attention</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-panel">
+    <div class="progress-copy">
+      <div>
+        <span class="panel-label">Your progress</span>
+        <strong>{{ completedCount }} of {{ assignedTasks.length }} tasks finished</strong>
+      </div>
+      <span class="progress-note">{{ inProgressCount }} in progress</span>
+    </div>
+    <div class="progress-track" role="progressbar" [attr.aria-valuenow]="completionPercent" aria-valuemin="0" aria-valuemax="100">
+      <span [style.width.%]="completionPercent"></span>
+    </div>
+  </div>
+
+  @if (uploadMessage) { <div class="alert alert-success" role="status">{{ uploadMessage }}</div> }
+  <div class="tasks-layout">
+    <div class="task-list-section">
+      <div class="list-heading">
+        <div><span class="section-kicker">Assigned work</span><h3>All tasks</h3></div>
+        <span>{{ assignedTasks.length }} total</span>
+      </div>
+      <div class="task-list">
+        @for (task of assignedTasks; track task.id; let taskIndex = $index) {
+          <article class="task-row" [class.completed]="task.status === 'Completed'" [class.in-progress]="task.status === 'In Progress'">
+            <div class="task-marker" aria-hidden="true">{{ task.status === 'Completed' ? 'OK' : taskIndex + 1 }}</div>
+            <div class="task-content">
+              <div class="task-heading">
+                <div class="task-title-group">
+                  <strong>{{ task.title }}</strong>
+                  <span class="task-id">Task {{ taskIndex + 1 }}</span>
+                </div>
+                <span class="status" [class.status-progress]="task.status === 'In Progress'" [class.status-completed]="task.status === 'Completed'">{{ task.status }}</span>
+              </div>
+              <small class="task-detail">{{ task.detail }}</small>
+              <div class="task-meta">
+                <small class="due-date" [class.overdue]="getDueState(task) === 'overdue'" [class.due-today]="getDueState(task) === 'today'">{{ formatDueDate(task) }}</small>
+                @if (task.attachmentName) { <small class="attachment-name">Attachment ready</small> }
+              </div>
+              <span class="file-controls">
+                <input #fileInput type="file" [id]="'file-' + task.id" (change)="onFileSelected(task, $event)" hidden />
+                <button type="button" (click)="fileInput.click()"><span aria-hidden="true">&#8593;</span> {{ task.attachmentName ? 'Replace file' : 'Add attachment' }}</button>
+              </span>
+            </div>
+            <div class="task-actions">
+              @if (task.status === 'Pending') { <button type="button" (click)="setStatus(task, 'In Progress')">Start task <span aria-hidden="true">&#8594;</span></button> }
+              @if (task.status === 'In Progress') { <button type="button" class="complete-button" (click)="setStatus(task, 'Completed')">Mark complete <span aria-hidden="true">&#10003;</span></button> }
+              @if (task.status === 'Completed') { <small class="completed-label">Completed</small> }
+            </div>
+          </article>
+        }
+        @empty { <p class="muted empty-state">No tasks were assigned.</p> }
+      </div>
+    </div>
+
+    <aside class="work-summary">
+      <div class="summary-heading"><span class="section-kicker">At a glance</span><h3>Work summary</h3></div>
+      <div class="summary-stat"><span class="summary-icon pending-icon">!</span><div><strong>{{ pendingCount }}</strong><small>Waiting to start</small></div></div>
+      <div class="summary-stat"><span class="summary-icon active-icon">&#8594;</span><div><strong>{{ inProgressCount }}</strong><small>In progress</small></div></div>
+      <div class="summary-stat"><span class="summary-icon done-icon">&#10003;</span><div><strong>{{ completedCount }}</strong><small>Completed</small></div></div>
+      <div class="next-task">
+        <span class="section-kicker">Next up</span>
+        @if (nextTask) { <strong>{{ nextTask.title }}</strong><small>{{ formatDueDate(nextTask) }}</small> }
+        @else { <strong>Everything is complete</strong><small>Nice work for today.</small> }
+        </div>
+    </aside>
+  </div>
+</section>

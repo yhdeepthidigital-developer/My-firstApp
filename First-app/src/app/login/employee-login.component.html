@@ -1,0 +1,26 @@
+<section class="employee-login-page">
+  <div class="employee-login-card">
+    <div class="brand-mark" aria-hidden="true">EP</div>
+    <p class="eyebrow">Employee Portal</p>
+    <h1>Ready for your day?</h1>
+    <p class="intro">Sign in to clock your hours, review your time, and manage your tasks.</p>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    }
+
+    <form (ngSubmit)="login()">
+      <div class="field-group">
+        <label for="employee-email">Work email</label>
+        <input id="employee-email" name="email" type="email" [(ngModel)]="email" placeholder="you@company.com" autocomplete="username" required />
+      </div>
+      <div class="field-group">
+        <label for="employee-password">Password</label>
+        <input id="employee-password" name="password" type="password" [(ngModel)]="password" placeholder="Enter your password" autocomplete="current-password" required />
+      </div>
+      <button class="login-button" type="submit">Open my workspace <span aria-hidden="true">&#8594;</span></button>
+    </form>
+    <p class="demo-note">Demo employee password: <strong>employee123</strong></p>
+    <a class="portal-link" routerLink="/login">Administrator sign in</a>
+  </div>
+</section>

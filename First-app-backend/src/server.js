@@ -6,7 +6,7 @@ const { Pool } = require('pg');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 const seedEmployees = [
   { id: 1, name: 'Ava Carter', role: 'Project Manager', department: 'Operations', email: 'ava.carter@company.com', status: 'Active' },
@@ -15,9 +15,15 @@ const seedEmployees = [
 ];
 
 const seedAttendance = [
-  { id: 1, employeeId: 1, date: '2026-08-05', status: 'Present' },
-  { id: 2, employeeId: 2, date: '2026-08-05', status: 'Present' },
-  { id: 3, employeeId: 3, date: '2026-08-05', status: 'Late' }
+  { id: 1, employeeId: 1, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T08:57:00.000Z', clockOut: '2026-08-05T17:12:00.000Z' },
+  { id: 2, employeeId: 2, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T09:04:00.000Z', clockOut: '2026-08-05T17:36:00.000Z' },
+  { id: 3, employeeId: 3, date: '2026-08-05', status: 'Late', clockIn: '2026-08-05T09:42:00.000Z', clockOut: '2026-08-05T18:01:00.000Z' }
+];
+
+const seedTasks = [
+  { id: 1, employeeId: 1, title: 'Review project priorities', detail: 'Prepare the operations update for the team meeting.', dueDate: '2026-08-12', status: 'Pending', startedAt: null, completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null },
+  { id: 2, employeeId: 2, title: 'Fix responsive navigation', detail: 'Resolve the mobile navigation issues in the dashboard.', dueDate: '2026-08-11', status: 'In Progress', startedAt: '2026-08-10T08:30:00.000Z', completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null },
+  { id: 3, employeeId: 3, title: 'Prepare onboarding checklist', detail: 'Share the updated checklist with People Ops.', dueDate: '2026-08-14', status: 'Pending', startedAt: null, completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null }
 ];
 
 function createPool(databaseName = process.env.DB_NAME || 'postgres') {
@@ -101,9 +107,36 @@ async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         employee_id INT REFERENCES employees(id) ON DELETE CASCADE,
         date DATE NOT NULL,
-        status VARCHAR(30) NOT NULL
+        status VARCHAR(30) NOT NULL,
+        clock_in TIMESTAMPTZ,
+        clock_out TIMESTAMPTZ,
+        UNIQUE (employee_id, date)
       );
     `);
+    await pool.query('ALTER TABLE attendance ADD COLUMN IF NOT EXISTS clock_in TIMESTAMPTZ');
+    await pool.query('ALTER TABLE attendance ADD COLUMN IF NOT EXISTS clock_out TIMESTAMPTZ');
+    await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS attendance_employee_date_idx ON attendance(employee_id, date)');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        employee_id INT REFERENCES employees(id) ON DELETE CASCADE,
+        title VARCHAR(160) NOT NULL,
+        detail TEXT NOT NULL,
+        due_date DATE NOT NULL,
+        status VARCHAR(30) NOT NULL DEFAULT 'Pending',
+        started_at TIMESTAMPTZ,
+        completed_at TIMESTAMPTZ,
+        duration_minutes INT,
+        attachment_name VARCHAR(255),
+        attachment_data TEXT
+      );
+    `);
+    await pool.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ');
+    await pool.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS duration_minutes INT');
+    await pool.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS attachment_name VARCHAR(255)');
+    await pool.query('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS attachment_data TEXT');
 
     const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM employees');
     if (rows[0].count === 0) {
@@ -118,9 +151,18 @@ async function initializeDatabase() {
       );
 
       await pool.query(
-        `INSERT INTO attendance (employee_id, date, status)
-         VALUES ($1, $2, $3), ($4, $5, $6), ($7, $8, $9)`,
-        [1, '2026-08-05', 'Present', 2, '2026-08-05', 'Present', 3, '2026-08-05', 'Late']
+        `INSERT INTO attendance (employee_id, date, status, clock_in, clock_out)
+         VALUES ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10), ($11, $12, $13, $14, $15)`,
+        [1, '2026-08-05', 'Present', '2026-08-05T08:57:00Z', '2026-08-05T17:12:00Z', 2, '2026-08-05', 'Present', '2026-08-05T09:04:00Z', '2026-08-05T17:36:00Z', 3, '2026-08-05', 'Late', '2026-08-05T09:42:00Z', '2026-08-05T18:01:00Z']
+      );
+    }
+
+    const taskCount = await pool.query('SELECT COUNT(*)::int AS count FROM tasks');
+    if (taskCount.rows[0].count === 0) {
+      await pool.query(
+        `INSERT INTO tasks (employee_id, title, detail, due_date, status, started_at)
+         VALUES ($1, $2, $3, $4, $5, $6), ($7, $8, $9, $10, $11, $12), ($13, $14, $15, $16, $17, $18)`,
+        [1, seedTasks[0].title, seedTasks[0].detail, seedTasks[0].dueDate, seedTasks[0].status, seedTasks[0].startedAt, 2, seedTasks[1].title, seedTasks[1].detail, seedTasks[1].dueDate, seedTasks[1].status, seedTasks[1].startedAt, 3, seedTasks[2].title, seedTasks[2].detail, seedTasks[2].dueDate, seedTasks[2].status, seedTasks[2].startedAt]
       );
     }
 
@@ -149,7 +191,8 @@ async function getAttendance() {
   }
 
   const result = await pool.query(
-    `SELECT a.id, a.employee_id AS "employeeId", a.date, a.status
+        `SELECT a.id, a.employee_id AS "employeeId", a.date, a.status,
+          a.clock_in AS "clockIn", a.clock_out AS "clockOut"
      FROM attendance a
      ORDER BY a.date DESC, a.id`
   );
@@ -165,6 +208,83 @@ app.get('/api/employees', async (req, res) => {
 app.get('/api/attendance', async (req, res) => {
   const attendance = await getAttendance();
   res.json(attendance);
+});
+
+app.get('/api/tasks', async (req, res) => {
+  if (!pool || !databaseReady) return res.json(seedTasks);
+  const result = await pool.query(
+        `SELECT id, employee_id AS "employeeId", title, detail, due_date AS "dueDate", status,
+          started_at AS "startedAt", completed_at AS "completedAt", duration_minutes AS "durationMinutes",
+          attachment_name AS "attachmentName", attachment_data AS "attachmentData"
+     FROM tasks ORDER BY due_date ASC, id ASC`
+  );
+  res.json(result.rows);
+});
+
+app.post('/api/tasks', async (req, res) => {
+  const { employeeId, title, detail, dueDate, status = 'Pending' } = req.body;
+  if (!pool || !databaseReady) {
+    const task = { id: Date.now(), employeeId: Number(employeeId), title, detail, dueDate, status, startedAt: null, completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null };
+    seedTasks.push(task);
+    return res.status(201).json(task);
+  }
+  const result = await pool.query(
+    `INSERT INTO tasks (employee_id, title, detail, due_date, status)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING id, employee_id AS "employeeId", title, detail, due_date AS "dueDate", status,
+       started_at AS "startedAt", completed_at AS "completedAt", duration_minutes AS "durationMinutes",
+       attachment_name AS "attachmentName", attachment_data AS "attachmentData"`,
+    [employeeId, title, detail, dueDate, status]
+  );
+  res.status(201).json(result.rows[0]);
+});
+
+app.put('/api/tasks/:id', async (req, res) => {
+  const { id } = req.params;
+  const { status, startedAt, completedAt, durationMinutes, attachmentName, attachmentData } = req.body;
+  if (!pool || !databaseReady) {
+    const task = seedTasks.find((item) => item.id === Number(id));
+    if (!task) return res.status(404).json({ message: 'Task not found.' });
+    Object.assign(task, { status, startedAt, completedAt, durationMinutes, attachmentName, attachmentData });
+    return res.json(task);
+  }
+  const result = await pool.query(
+    `UPDATE tasks SET status = $1, started_at = $2, completed_at = $3, duration_minutes = $4,
+       attachment_name = $5, attachment_data = $6 WHERE id = $7
+     RETURNING id, employee_id AS "employeeId", title, detail, due_date AS "dueDate", status,
+       started_at AS "startedAt", completed_at AS "completedAt", duration_minutes AS "durationMinutes",
+       attachment_name AS "attachmentName", attachment_data AS "attachmentData"`,
+    [status, startedAt, completedAt, durationMinutes, attachmentName, attachmentData, id]
+  );
+  res.json(result.rows[0]);
+});
+
+app.post('/api/attendance/clock', async (req, res) => {
+  const { employeeId, clockIn } = req.body;
+  const now = new Date().toISOString();
+  const date = now.slice(0, 10);
+
+  if (!pool || !databaseReady) {
+    const index = seedAttendance.findIndex((record) => record.employeeId === Number(employeeId) && record.date === date);
+    const record = index >= 0 ? { ...seedAttendance[index] } : { id: Date.now(), employeeId: Number(employeeId), date, status: 'Present', clockIn: null, clockOut: null };
+    if (clockIn) record.clockIn = now;
+    else record.clockOut = now;
+    if (index >= 0) seedAttendance[index] = record;
+    else seedAttendance.unshift(record);
+    return res.json(record);
+  }
+
+  const result = await pool.query(
+    `INSERT INTO attendance (employee_id, date, status, clock_in, clock_out)
+     VALUES ($1, $2, 'Present', CASE WHEN $3 THEN $4 ELSE NULL END, CASE WHEN $3 THEN NULL ELSE $4 END)
+     ON CONFLICT (employee_id, date) DO UPDATE SET
+       clock_in = CASE WHEN $3 THEN EXCLUDED.clock_in ELSE attendance.clock_in END,
+       clock_out = CASE WHEN $3 THEN NULL ELSE EXCLUDED.clock_out END,
+       status = 'Present'
+     RETURNING id, employee_id AS "employeeId", date, status, clock_in AS "clockIn", clock_out AS "clockOut"`,
+    [employeeId, date, Boolean(clockIn), now]
+  );
+  res.json(result.rows[0]);
 });
 
 app.post('/api/employees', async (req, res) => {

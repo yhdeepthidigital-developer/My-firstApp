@@ -33,6 +33,8 @@
         <tr>
           <th>Employee</th>
           <th>Date</th>
+          <th>Clock in</th>
+          <th>Clock out</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -41,6 +43,8 @@
           <tr>
             <td>{{ getEmployeeName(record.employeeId) }}</td>
             <td>{{ record.date }}</td>
+            <td>{{ record.clockIn ? (record.clockIn | date: 'shortTime') : '-' }}</td>
+            <td>{{ record.clockOut ? (record.clockOut | date: 'shortTime') : '-' }}</td>
             <td>
               <span class="badge rounded-pill text-bg-{{ record.status.toLowerCase() }}">{{ record.status }}</span>
             </td>
