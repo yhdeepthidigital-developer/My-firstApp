@@ -7,7 +7,7 @@
     </div>
     <label class="month-picker" for="attendance-month">
       <span>View month</span>
-      <input id="attendance-month" type="month" [(ngModel)]="selectedMonth" />
+      <input id="attendance-month" type="month" [(ngModel)]="selectedMonth" (ngModelChange)="onMonthChange()" />
     </label>
   </div>
 
@@ -28,7 +28,7 @@
       </div>
 
       <div class="attendance-list">
-        @for (record of filteredAttendance; track record.id) {
+        @for (record of visibleAttendance; track record.id) {
           <article class="attendance-row">
             <div class="date-block">
               <strong>{{ record.date | date: 'dd' }}</strong>
@@ -44,6 +44,10 @@
           <p class="empty-state muted">No attendance records for this month.</p>
         }
       </div>
+
+      @if (hasMoreRecords) {
+        <button class="show-more-btn" type="button" (click)="showMore()">Show more ({{ remainingCount }} remaining)</button>
+      }
     </section>
 
     <section class="leave-panel">

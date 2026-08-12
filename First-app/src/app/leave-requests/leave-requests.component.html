@@ -2,10 +2,14 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <p class="text-uppercase text-secondary small mb-1 fw-semibold">Admin</p>
-      <h2 class="mb-0">Leave Requests</h2>
+      <h2 class="mb-0">Shift & Leave Requests</h2>
     </div>
   </div>
 
+  @if (successMessage) { <div class="alert alert-success" role="status">{{ successMessage }}</div> }
+  @if (errorMessage) { <div class="alert alert-danger" role="alert">{{ errorMessage }}</div> }
+
+  <h3 class="section-title">Leave requests</h3>
   <div class="table-responsive">
     <table class="table table-hover align-middle">
       <thead>
@@ -43,8 +47,67 @@
               }
             </td>
           </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">No leave requests.</td>
+          </tr>
         }
       </tbody>
     </table>
   </div>
+
+  <h3 class="section-title mt-5">Shift change requests</h3>
+  @if (shiftRequests().length > 0) {
+    @for (request of shiftRequests(); track request.id) {
+      <article class="shift-request-card">
+        <div class="shift-request-header">
+          <div class="shift-request-person">
+            <span class="avatar">{{ request.employeeName.charAt(0) }}</span>
+            <div>
+              <strong>{{ request.employeeName }}</strong>
+              <small>Current shift: {{ request.currentShift }} &#8594; Requested: {{ request.requestedStart }} to {{ request.requestedEnd }}</small>
+            </div>
+          </div>
+          <span class="badge rounded-pill shift-status" [class]="getRequestStatusClass(request.status)">{{ request.status }}</span>
+        </div>
+        <p class="shift-request-reason"><strong>Reason:</strong> {{ request.reason }}</p>
+        <p class="shift-request-dates">{{ formatDate(request.startDate) }} &ndash; {{ formatDate(request.endDate) }}</p>
+
+        <div class="shift-day-list">
+          @for (day of request.days; track day.date) {
+            <div class="shift-day-row">
+              <div class="shift-day-info">
+                <strong>{{ formatDate(day.date) }}</strong>
+                @if (day.rejectionReason) { <small class="rejection-reason">Rejected: {{ day.rejectionReason }}</small> }
+              </div>
+              <span class="badge rounded-pill day-status" [class]="getDayStatusClass(day.status)">{{ day.status }}</span>
+              @if (day.status === 'Pending') {
+                <div class="shift-day-actions">
+                  <button class="btn btn-sm btn-outline-success" type="button" (click)="approveShiftDay(request.id, day.date)">Approve</button>
+                  <button class="btn btn-sm btn-outline-danger" type="button" (click)="toggleReject(request.id, day.date)">Reject</button>
+                </div>
+              }
+            </div>
+
+            @if (rejectingShift()?.requestId === request.id && rejectingShift()?.dayDate === day.date) {
+              <div class="reject-form d-flex gap-2 align-items-center mt-2">
+                <input class="form-control" type="text" [value]="rejectionReasons()[request.id + ':' + day.date] || ''" (input)="updateRejectionReason(request.id, day.date, $any($event.target).value)" placeholder="Reason for rejecting this date" />
+                <button class="btn btn-sm btn-danger" type="button" (click)="rejectShiftDay(request.id, day.date)">Confirm reject</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" (click)="cancelReject()">Cancel</button>
+              </div>
+            }
+          }
+        </div>
+
+        @if (request.status === 'Pending' && request.days.some(day => day.status === 'Pending')) {
+          <div class="d-flex gap-2 mt-3 pt-3 border-top">
+            <button class="btn btn-sm btn-success" type="button" (click)="approveAllShiftDays(request.id)">Approve all dates</button>
+            <button class="btn btn-sm btn-outline-danger" type="button" (click)="rejectAllShiftDays(request.id)">Reject all dates</button>
+          </div>
+        }
+      </article>
+    }
+  } @else {
+    <p class="text-muted small">No shift change requests.</p>
+  }
 </section>

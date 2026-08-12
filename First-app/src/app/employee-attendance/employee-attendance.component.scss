@@ -19,6 +19,8 @@ h4 { font-size: .92rem; }
 .section-heading { display: flex; align-items: start; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid #e8f0ef; }
 .record-count { display: grid; width: 1.8rem; height: 1.8rem; place-items: center; color: #0e8f8a; background: #e5f7f4; border-radius: 50%; font-size: .75rem; font-weight: 800; }
 .attendance-list { display: grid; }
+.show-more-btn { display: block; width: 100%; margin-top: 1rem; padding: .6rem 1rem; color: #0e8f8a; background: #e5f7f4; border: 1px solid #b8e6e0; border-radius: .5rem; font-size: .8rem; font-weight: 800; cursor: pointer; transition: background .2s, color .2s; }
+.show-more-btn:hover { color: #fff; background: #0e8f8a; }
 .attendance-row { display: grid; grid-template-columns: 3rem minmax(0, 1fr) auto; align-items: center; gap: .9rem; padding: .9rem 0; border-bottom: 1px solid #edf3f2; }
 .attendance-row:last-child { border-bottom: 0; }
 .date-block { display: grid; width: 3rem; height: 3rem; place-items: center; align-content: center; color: #0e8f8a; background: #e5f7f4; border-radius: .6rem; }

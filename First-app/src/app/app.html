@@ -13,7 +13,7 @@
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/employees" routerLinkActive="active">Employees</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/attendance" routerLinkActive="active">Attendance</a>
-        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/leave-requests" routerLinkActive="active">Leave Requests</a>
+        <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/leave-requests" routerLinkActive="active">Shift & Leave Requests</a>
         <a class="nav-link rounded px-3 py-2 text-white-50" routerLink="/task-assignment" routerLinkActive="active">Assign Tasks</a>
         <div class="sidebar-footer mt-auto">
           <span class="admin-avatar" aria-hidden="true">A</span>
@@ -50,7 +50,7 @@
           <span class="header-date">{{ today | date: 'EEEE, d MMMM' }}</span>
           <div class="notification-wrap">
             <button class="header-action notification-action" type="button" (click)="openNotifications()" aria-label="Open notifications"><span aria-hidden="true">&#128276;</span>@if (notificationCount() > 0) { <i>{{ notificationCount() }}</i> }</button>
-            @if (notificationsOpen) { <section class="notification-menu"><div class="notification-title"><strong>Notifications</strong><span>{{ notificationCount() }} pending</span></div>@for (request of leaveRequests().filter(item => item.status === 'Pending'); track request.id) { <a routerLink="/leave-requests" (click)="notificationsOpen = false"><b>Leave request</b>{{ request.employeeName }} requested leave</a> } @for (request of shiftRequests().filter(item => item.status === 'Pending'); track request.id) { <a routerLink="/employees" (click)="notificationsOpen = false"><b>Shift request</b>{{ request.employeeName }} requested {{ request.requestedStart }}–{{ request.requestedEnd }}</a> } @if (notificationCount() === 0) { <p>No pending requests.</p> }</section> }
+            @if (notificationsOpen) { <section class="notification-menu"><div class="notification-title"><strong>Notifications</strong><span>{{ notificationCount() }} pending</span></div>@for (request of leaveRequests().filter(item => item.status === 'Pending'); track request.id) { <a routerLink="/leave-requests" (click)="notificationsOpen = false"><b>Leave request</b>{{ request.employeeName }} requested leave</a> } @for (request of shiftRequests().filter(item => item.status === 'Pending'); track request.id) { <a routerLink="/leave-requests" (click)="notificationsOpen = false"><b>Shift request</b>{{ request.employeeName }} requested {{ request.requestedStart }}–{{ request.requestedEnd }}</a> } @if (notificationCount() === 0) { <p>No pending requests.</p> }</section> }
           </div>
           <a class="header-action quick-add" [routerLink]="['/employees']" [queryParams]="{ action: 'add' }"><span aria-hidden="true">+</span> Add employee</a>
           <button class="header-logout" type="button" (click)="logout()">Logout</button>

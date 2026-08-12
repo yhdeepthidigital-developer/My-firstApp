@@ -24,6 +24,8 @@ export class EmployeeAttendanceComponent implements OnDestroy {
   protected reason = '';
   protected errorMessage = '';
   protected successMessage = '';
+  protected readonly initialVisibleCount = 6;
+  protected visibleCount = this.initialVisibleCount;
 
   protected get employeeName(): string {
     return this.employeeService.employees().find((employee) => employee.id === this.employeeId)?.name ?? 'Employee';
@@ -33,6 +35,26 @@ export class EmployeeAttendanceComponent implements OnDestroy {
     return this.attendance()
       .filter((record) => record.employeeId === this.employeeId && record.date.startsWith(this.selectedMonth))
       .sort((first, second) => second.date.localeCompare(first.date));
+  }
+
+  protected get visibleAttendance(): AttendanceRecord[] {
+    return this.filteredAttendance.slice(0, this.visibleCount);
+  }
+
+  protected get hasMoreRecords(): boolean {
+    return this.filteredAttendance.length > this.visibleCount;
+  }
+
+  protected get remainingCount(): number {
+    return this.filteredAttendance.length - this.visibleCount;
+  }
+
+  protected showMore(): void {
+    this.visibleCount += this.initialVisibleCount;
+  }
+
+  protected onMonthChange(): void {
+    this.visibleCount = this.initialVisibleCount;
   }
 
   protected get presentCount(): number {

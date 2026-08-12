@@ -36,6 +36,12 @@ export interface LeaveRequest {
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
+export interface ShiftChangeDay {
+  date: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  rejectionReason: string | null;
+}
+
 export interface ShiftChangeRequest {
   id: number;
   employeeId: number;
@@ -44,7 +50,10 @@ export interface ShiftChangeRequest {
   requestedStart: string;
   requestedEnd: string;
   reason: string;
+  startDate: string;
+  endDate: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+  days: ShiftChangeDay[];
 }
 
 export interface Task {

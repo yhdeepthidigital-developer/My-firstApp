@@ -2,30 +2,51 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <p class="text-uppercase text-secondary small mb-1 fw-semibold">Tracking</p>
-      <h2 class="mb-0">Attendance List</h2>
+      <h2 class="mb-0">Attendance</h2>
+    </div>
+    <div class="d-flex gap-4">
+      <div><strong class="text-success">{{ presentCount }}</strong> <span class="text-muted small">Present</span></div>
+      <div><strong class="text-danger">{{ absentCount }}</strong> <span class="text-muted small">Absent</span></div>
+      <div><strong>{{ baseAttendance.length }}</strong> <span class="text-muted small">Records</span></div>
     </div>
   </div>
 
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <label class="form-label">Employee Name</label>
-      <input class="form-control" type="text" [(ngModel)]="employeeNameFilter" placeholder="Search by employee" />
-    </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <label class="form-label">Date</label>
-      <input class="form-control" type="date" [(ngModel)]="dateFilter" />
+      <input class="form-control" type="date" [value]="dateFilter" (input)="onDateChange($any($event.target).value)" />
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
+      <label class="form-label">Month</label>
+      <input class="form-control" type="month" [value]="monthFilter" (input)="onMonthChange($any($event.target).value)" />
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Employee Name</label>
+      <select class="form-select" [(ngModel)]="employeeIdFilter">
+        <option [ngValue]="null">All employees</option>
+        @for (employee of employees(); track employee.id) {
+          <option [ngValue]="employee.id">{{ employee.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="col-md-3">
       <label class="form-label">Status</label>
       <select class="form-select" [(ngModel)]="statusFilter">
         <option value="">All</option>
         <option value="Present">Present</option>
         <option value="Absent">Absent</option>
         <option value="Late">Late</option>
+        <option value="Half Day">Half Day</option>
         <option value="Holiday">Holiday</option>
       </select>
     </div>
   </div>
+
+  @if (dateFilter || monthFilter || employeeIdFilter || statusFilter) {
+    <div class="mb-3">
+      <button class="btn btn-sm btn-outline-secondary" type="button" (click)="clearFilters()">Clear filters</button>
+    </div>
+  }
 
   <div class="table-responsive">
     <table class="table table-hover align-middle">
@@ -46,8 +67,12 @@
             <td>{{ record.clockIn ? (record.clockIn | date: 'shortTime') : '-' }}</td>
             <td>{{ record.clockOut ? (record.clockOut | date: 'shortTime') : '-' }}</td>
             <td>
-              <span class="badge rounded-pill text-bg-{{ record.status.toLowerCase() }}">{{ record.status }}</span>
+              <span class="badge rounded-pill text-bg-{{ record.status.toLowerCase().replace(' ', '-') }}">{{ record.status }}</span>
             </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">No attendance records for the selected filters.</td>
           </tr>
         }
       </tbody>

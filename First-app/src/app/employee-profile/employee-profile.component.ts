@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Employee, EmployeeService } from '../employee.service';
+import { Employee, EmployeeService, ShiftChangeDay } from '../employee.service';
 
 @Component({
   selector: 'app-employee-profile',
@@ -21,7 +21,10 @@ export class EmployeeProfileComponent {
   protected showShiftRequest = false;
   protected requestedShiftStart = '';
   protected requestedShiftEnd = '';
+  protected requestedStartDate = '';
+  protected requestedEndDate = '';
   protected shiftRequestReason = '';
+  protected readonly minShiftDate = new Date().toISOString().slice(0, 10);
   private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private errorTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -107,21 +110,56 @@ export class EmployeeProfileComponent {
   protected requestShiftChange(): void {
     const employee = this.employee;
     if (!employee) return;
-    if (!this.requestedShiftStart || !this.requestedShiftEnd || !this.shiftRequestReason.trim()) {
-      this.showError('Select the requested shift times and provide a reason.');
+    if (!this.requestedShiftStart || !this.requestedShiftEnd || !this.requestedStartDate || !this.requestedEndDate || !this.shiftRequestReason.trim()) {
+      this.showError('Select the requested shift times, start/end dates, and provide a reason.');
       return;
     }
+    if (this.requestedEndDate < this.requestedStartDate) {
+      this.showError('The end date must be on or after the start date.');
+      return;
+    }
+    if (this.requestedStartDate < this.minShiftDate) {
+      this.showError('Shift changes can be requested only from today onwards.');
+      return;
+    }
+
+    const days: ShiftChangeDay[] = this.buildDayList(this.requestedStartDate, this.requestedEndDate);
+
     this.employeeService.shiftChangeRequests.update((current) => [...current, {
-      id: Date.now(), employeeId: employee.id, employeeName: employee.name,
+      id: Date.now(),
+      employeeId: employee.id,
+      employeeName: employee.name,
       currentShift: `${employee.shiftStart || '09:00'}-${employee.shiftEnd || '18:00'}`,
-      requestedStart: this.requestedShiftStart, requestedEnd: this.requestedShiftEnd,
-      reason: this.shiftRequestReason.trim(), status: 'Pending'
+      requestedStart: this.requestedShiftStart,
+      requestedEnd: this.requestedShiftEnd,
+      reason: this.shiftRequestReason.trim(),
+      startDate: this.requestedStartDate,
+      endDate: this.requestedEndDate,
+      status: 'Pending',
+      days
     }]);
     this.employeeService.markNotificationsUnread();
-    this.requestedShiftStart = ''; this.requestedShiftEnd = ''; this.shiftRequestReason = ''; this.showShiftRequest = false;
+    this.requestedShiftStart = '';
+    this.requestedShiftEnd = '';
+    this.requestedStartDate = '';
+    this.requestedEndDate = '';
+    this.shiftRequestReason = '';
+    this.showShiftRequest = false;
     this.successMessage = 'Shift change request sent to your administrator.';
     this.clearSuccessTimeout();
     this.successTimeoutId = setTimeout(() => this.successMessage = '', 4000);
+  }
+
+  private buildDayList(startDate: string, endDate: string): ShiftChangeDay[] {
+    const days: ShiftChangeDay[] = [];
+    const cursor = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
+    while (cursor <= end) {
+      const date = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+      days.push({ date, status: 'Pending', rejectionReason: null });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return days;
   }
 
   private showError(message: string): void {
