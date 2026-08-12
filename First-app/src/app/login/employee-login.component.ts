@@ -20,7 +20,7 @@ export class EmployeeLoginComponent {
 
   protected login(): void {
     const employee = this.employeeService.employees().find((item) => item.email.toLowerCase() === this.email.trim().toLowerCase());
-    if (employee && this.password.trim() === 'employee123') {
+      if (employee && this.password === (employee.password ?? 'employee123')) {
       localStorage.setItem('userRole', 'employee');
       localStorage.setItem('employeeId', String(employee.id));
       localStorage.setItem('employeeName', employee.name);

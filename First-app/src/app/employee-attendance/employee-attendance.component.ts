@@ -13,10 +13,12 @@ import { AttendanceRecord, EmployeeService, LeaveRequest } from '../employee.ser
 export class EmployeeAttendanceComponent implements OnDestroy {
   private readonly employeeService = inject(EmployeeService);
   private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private errorTimeoutId: ReturnType<typeof setTimeout> | null = null;
   protected readonly attendance = this.employeeService.attendance;
   protected readonly leaveRequests = this.employeeService.leaveRequests;
   protected readonly employeeId = Number(localStorage.getItem('employeeId'));
   protected selectedMonth = new Date().toISOString().slice(0, 7);
+  protected readonly minLeaveDate = new Date().toISOString().slice(0, 10);
   protected startDate = '';
   protected endDate = '';
   protected reason = '';
@@ -51,11 +53,15 @@ export class EmployeeAttendanceComponent implements OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
     if (!this.startDate || !this.endDate || !this.reason.trim()) {
-      this.errorMessage = 'Choose the leave dates and add a reason.';
+      this.showError('Choose the leave dates and add a reason.');
+      return;
+    }
+    if (this.startDate < this.minLeaveDate) {
+      this.showError('Leave requests can start only from today.');
       return;
     }
     if (this.endDate < this.startDate) {
-      this.errorMessage = 'The end date must be on or after the start date.';
+      this.showError('The end date must be on or after the start date.');
       return;
     }
 
@@ -68,6 +74,7 @@ export class EmployeeAttendanceComponent implements OnDestroy {
       reason: this.reason.trim(),
       status: 'Pending'
     }]);
+    this.employeeService.markNotificationsUnread();
     this.startDate = '';
     this.endDate = '';
     this.reason = '';
@@ -85,6 +92,7 @@ export class EmployeeAttendanceComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.clearSuccessTimeout();
+    if (this.errorTimeoutId !== null) clearTimeout(this.errorTimeoutId);
   }
 
   private clearSuccessTimeout(): void {
@@ -92,5 +100,11 @@ export class EmployeeAttendanceComponent implements OnDestroy {
       clearTimeout(this.successTimeoutId);
       this.successTimeoutId = null;
     }
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    if (this.errorTimeoutId !== null) clearTimeout(this.errorTimeoutId);
+    this.errorTimeoutId = setTimeout(() => { this.errorMessage = ''; this.errorTimeoutId = null; }, 4000);
   }
 }

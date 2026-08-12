@@ -3,7 +3,7 @@
     <div class="brand-mark" aria-hidden="true">EM</div>
     <p class="eyebrow">Employee Management</p>
     <h1>Welcome back</h1>
-    <p class="intro">Sign in to manage your team, attendance, and leave requests.</p>
+    <p class="intro">Sign in to access your admin workspace or employee portal.</p>
 
     @if (errorMessage) {
       <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
@@ -11,7 +11,7 @@
 
     <form (ngSubmit)="login()">
       <div class="field-group">
-        <label for="email">Email address</label>
+        <label for="email">Work email</label>
         <input id="email" name="email" type="email" [(ngModel)]="email" placeholder="admin@company.com" autocomplete="username" required />
       </div>
 
@@ -23,7 +23,6 @@
       <button class="login-button" type="submit">Sign in <span aria-hidden="true">&#8594;</span></button>
     </form>
 
-    <p class="secure-note"><span aria-hidden="true">&#128274;</span> Secure administrator access</p>
-    <a class="portal-link" routerLink="/employee-login">Employee portal sign in</a>
+    <p class="secure-note"><span aria-hidden="true">&#128274;</span> Use your assigned account credentials</p>
   </div>
 </section>

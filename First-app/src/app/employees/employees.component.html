@@ -1,62 +1,14 @@
 <section class="employees-page">
-  <div class="page-heading">
-    <div>
-      <p class="eyebrow">People operations</p>
-      <h2>Employee directory</h2>
-      <p class="muted">Invite employees, maintain their profiles, and control availability.</p>
-    </div>
-    <div class="directory-count"><strong>{{ employees().length }}</strong><span>people in directory</span></div>
-  </div>
+  <div class="page-heading"><div><p class="eyebrow">People operations</p><h2>Employee directory</h2><p class="muted">View and manage your workforce records.</p></div><div class="directory-count"><strong>{{ employees().length }}</strong><span>people in directory</span></div></div>
+  @if (errorMessage()) { <div class="alert alert-danger" role="alert">{{ errorMessage() }}</div> } @if (successMessage()) { <div class="alert alert-success" role="status">{{ successMessage() }}</div> }
 
-  @if (errorMessage()) { <div class="alert alert-danger" role="alert">{{ errorMessage() }}</div> }
-  @if (successMessage()) { <div class="alert alert-success" role="status">{{ successMessage() }}</div> }
-
-  <div class="management-layout">
-    <section class="invite-panel">
-      <div class="section-heading">
-        <div><p class="section-kicker">{{ editingId ? 'Maintain profile' : 'Controlled access' }}</p><h3>{{ editingId ? 'Edit employee' : 'Invite employee' }}</h3></div>
-        <span class="form-mark">{{ editingId ? '&#9998;' : '+' }}</span>
-      </div>
-      <p class="muted">{{ editingId ? 'Keep the employee record accurate and up to date.' : 'Add the employee here, then share their portal login details privately.' }}</p>
-
-      <div class="form-grid">
-        <div class="field-group"><label for="employee-name">Full name</label><input id="employee-name" type="text" [(ngModel)]="form.name" (input)="clearError()" placeholder="e.g. Priya Shah" /></div>
-        <div class="field-group"><label for="employee-email">Work email</label><input id="employee-email" type="email" [(ngModel)]="form.email" (input)="clearError()" placeholder="name@company.com" /></div>
-        <div class="field-group"><label for="employee-role">Role</label><input id="employee-role" type="text" [(ngModel)]="form.role" (input)="clearError()" placeholder="e.g. Product Designer" /></div>
-        <div class="field-group"><label for="employee-department">Department</label><input id="employee-department" type="text" [(ngModel)]="form.department" (input)="clearError()" placeholder="e.g. Design" /></div>
-        @if (editingId) { <div class="field-group full-width"><label for="employee-status">Status</label><select id="employee-status" [(ngModel)]="form.status" (change)="clearError()"><option value="Active">Active</option><option value="On Leave">On Leave</option><option value="Remote">Remote</option></select></div> }
-      </div>
-
-      @if (!editingId) { <div class="access-note"><strong>Portal access</strong><span>Employee login password: <b>employee123</b></span></div> }
-      <div class="form-actions"><button class="save-button" type="button" (click)="saveEmployee()">{{ editingId ? 'Save changes' : 'Add employee' }} <span aria-hidden="true">&#8594;</span></button>@if (editingId) { <button class="cancel-button" type="button" (click)="resetForm()">Cancel</button> }</div>
+  @if (showForm) {
+    <section class="invite-panel add-employee-panel"><div class="section-heading"><div><p class="section-kicker">{{ editingId ? 'Maintain profile' : 'New team member' }}</p><h3>{{ editingId ? 'Edit employee' : 'Add employee' }}</h3></div><span class="form-mark">{{ editingId ? '&#9998;' : '+' }}</span></div><p class="muted">Set contact, birthday, and assigned shift details.</p>
+      <div class="form-grid"><div class="field-group"><label for="employee-name">Full name</label><input id="employee-name" type="text" [(ngModel)]="form.name" (input)="clearError()" /></div><div class="field-group"><label for="employee-email">Work email</label><input id="employee-email" type="email" [(ngModel)]="form.email" (input)="clearError()" /></div><div class="field-group"><label for="employee-role">Role</label><input id="employee-role" type="text" [(ngModel)]="form.role" (input)="clearError()" /></div><div class="field-group"><label for="employee-department">Department</label><input id="employee-department" type="text" [(ngModel)]="form.department" (input)="clearError()" /></div><div class="field-group"><label for="employee-birth-date">Date of birth</label><input id="employee-birth-date" type="date" [(ngModel)]="form.birthDate" /></div><div class="field-group"><label for="employee-shift-start">Shift starts</label><input id="employee-shift-start" type="time" [(ngModel)]="form.shiftStart" /></div><div class="field-group"><label for="employee-shift-end">Shift ends</label><input id="employee-shift-end" type="time" [(ngModel)]="form.shiftEnd" /></div>@if (editingId) { <div class="field-group full-width"><label for="employee-status">Status</label><select id="employee-status" [(ngModel)]="form.status"><option value="Active">Active</option><option value="On Leave">On Leave</option><option value="Remote">Remote</option></select></div> }</div>
+      @if (!editingId) { <div class="access-note"><strong>Portal access</strong><span>Default password: <b>employee123</b></span></div> }<div class="form-actions"><button class="save-button" type="button" (click)="saveEmployee()">{{ editingId ? 'Save changes' : 'Add employee' }}</button><button class="cancel-button" type="button" (click)="closeForm()">Cancel</button></div>
     </section>
-
-    <section class="directory-panel">
-      <div class="list-heading"><div><p class="section-kicker">Managed records</p><h3>Team directory</h3></div><span>{{ displayedEmployees.length }}</span></div>
-      <div class="table-responsive">
-        <table class="table align-middle">
-      <thead>
-        <tr>
-            <th>Employee</th><th>Department</th><th>Status</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (employee of displayedEmployees; track employee.id) {
-          <tr>
-            <td><div class="employee-cell"><span class="avatar">{{ employee.name.charAt(0) }}</span><div><strong>{{ employee.name }}</strong><small>{{ employee.email }}</small></div></div></td>
-            <td><span class="role-cell">{{ employee.role }}</span><small class="department-cell">{{ employee.department }}</small></td>
-            <td>
-              <span class="badge rounded-pill text-bg-{{ employee.status.toLowerCase().replace(' ', '-') }}">{{ employee.status }}</span>
-            </td>
-            <td>
-              <button class="action-button" type="button" (click)="editEmployee(employee)">Edit</button><button class="action-button delete" type="button" (click)="deleteEmployee(employee.id)">Remove</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-        </table>
-      </div>
-    </section>
-  </div>
+  } @else {
+    <section class="workforce-snapshot" aria-label="Today's workforce summary"><article class="snapshot-card present-card"><span class="snapshot-label">Present today</span><strong>{{ todayAttendance().present.length }}</strong><div>@for (employee of todayAttendance().present; track employee.id) { <span class="person-pill">{{ employee.name }}</span> } @empty { <span class="empty-copy">No check-ins yet.</span> }</div></article><article class="snapshot-card absent-card"><span class="snapshot-label">Absent today</span><strong>{{ todayAttendance().absent.length }}</strong><div>@for (employee of todayAttendance().absent; track employee.id) { <span class="person-pill">{{ employee.name }}</span> } @empty { <span class="empty-copy">No absences after shift grace.</span> }</div></article><article class="snapshot-card leave-card"><span class="snapshot-label">On leave</span><strong>{{ employeesOnLeave().length }}</strong><div>@for (employee of employeesOnLeave(); track employee.id) { <span class="person-pill">{{ employee.name }}</span> } @empty { <span class="empty-copy">No employees on leave.</span> }</div></article><article class="snapshot-card birthday-card"><span class="snapshot-label">Birthdays today</span><strong>{{ birthdaysToday().length }}</strong><div>@for (employee of birthdaysToday(); track employee.id) { <span class="person-pill">&#127874; {{ employee.name }}</span> } @empty { <span class="empty-copy">No birthdays today.</span> }</div></article></section>
+    <section class="directory-panel"><div class="list-heading"><div><p class="section-kicker">Managed records</p><h3>Team directory</h3></div><span>{{ displayedEmployees.length }}</span></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Employee ID</th><th>Name</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead><tbody>@for (employee of displayedEmployees; track employee.id) { <tr><td class="employee-id">{{ employeeCode(employee.id) }}</td><td><div class="employee-cell"><span class="avatar">{{ employee.name.charAt(0) }}</span><div><strong>{{ employee.name }}</strong><small>{{ employee.email }}</small></div></div></td><td>{{ employee.department }}</td><td><span class="badge rounded-pill text-bg-{{ employee.status.toLowerCase().replace(' ', '-') }}">{{ employee.status }}</span></td><td><button class="action-button" type="button" (click)="editEmployee(employee)">Edit</button><button class="action-button delete" type="button" (click)="deleteEmployee(employee.id)">Remove</button></td></tr> }</tbody></table></div></section>
+  }
 </section>

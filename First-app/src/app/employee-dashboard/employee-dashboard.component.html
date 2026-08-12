@@ -1,4 +1,7 @@
 <section class="employee-dashboard">
+  @if (isBirthdayToday) {
+    <section class="birthday-banner"><span aria-hidden="true">&#127881;</span><div><strong>Happy Birthday, {{ employeeDetails?.name }}!</strong><p>May your year ahead be filled with purpose, progress, and possibilities.</p></div><span aria-hidden="true">&#127874;</span></section>
+  }
   <div class="welcome-row">
     <div>
       <p class="eyebrow">Today, {{ now() | date: 'EEEE, MMMM d' }}</p>

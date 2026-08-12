@@ -4,6 +4,11 @@ CREATE TABLE employees (
   role VARCHAR(120) NOT NULL,
   department VARCHAR(120) NOT NULL,
   email VARCHAR(120) NOT NULL,
+  phone VARCHAR(40),
+  birth_date DATE,
+  shift_start TIME NOT NULL DEFAULT '09:00',
+  shift_end TIME NOT NULL DEFAULT '18:00',
+  password VARCHAR(255) NOT NULL DEFAULT 'employee123',
   status VARCHAR(30) NOT NULL
 );
 

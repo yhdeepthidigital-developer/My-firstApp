@@ -56,10 +56,10 @@
 
       <form (ngSubmit)="applyLeave()" novalidate>
         <label for="leave-start">Start date</label>
-        <input id="leave-start" name="startDate" type="date" [(ngModel)]="startDate" required />
+        <input id="leave-start" name="startDate" type="date" [min]="minLeaveDate" [(ngModel)]="startDate" required />
 
         <label for="leave-end">End date</label>
-        <input id="leave-end" name="endDate" type="date" [(ngModel)]="endDate" required />
+        <input id="leave-end" name="endDate" type="date" [min]="startDate || minLeaveDate" [(ngModel)]="endDate" required />
 
         <label for="leave-reason">Reason</label>
         <textarea id="leave-reason" name="reason" rows="4" [(ngModel)]="reason" placeholder="Add a short reason" required></textarea>

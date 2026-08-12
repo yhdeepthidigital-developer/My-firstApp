@@ -13,6 +13,7 @@ import { EmployeeService, NewTask, Task } from '../employee.service';
 export class TaskAssignmentComponent implements OnInit, OnDestroy {
   private readonly employeeService = inject(EmployeeService);
   private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private errorTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private trackingTimerId: ReturnType<typeof setInterval> | null = null;
   protected readonly employees = this.employeeService.employees;
   protected readonly tasks = this.employeeService.tasks;
@@ -77,7 +78,7 @@ export class TaskAssignmentComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage.set('');
     if (!this.form.employeeId || !this.form.title.trim() || !this.form.dueDate) {
-      this.errorMessage = 'Choose an employee, add a task title, and select a due date.';
+      this.showError('Choose an employee, add a task title, and select a due date.');
       return;
     }
 
@@ -94,6 +95,7 @@ export class TaskAssignmentComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.clearSuccessTimeout();
     if (this.trackingTimerId !== null) clearInterval(this.trackingTimerId);
+    if (this.errorTimeoutId !== null) clearTimeout(this.errorTimeoutId);
   }
 
   ngOnInit(): void {
@@ -105,5 +107,11 @@ export class TaskAssignmentComponent implements OnInit, OnDestroy {
       clearTimeout(this.successTimeoutId);
       this.successTimeoutId = null;
     }
+  }
+
+  private showError(message: string): void {
+    this.errorMessage = message;
+    if (this.errorTimeoutId !== null) clearTimeout(this.errorTimeoutId);
+    this.errorTimeoutId = setTimeout(() => { this.errorMessage = ''; this.errorTimeoutId = null; }, 4000);
   }
 }

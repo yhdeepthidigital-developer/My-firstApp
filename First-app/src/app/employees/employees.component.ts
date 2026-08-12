@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Employee, EmployeeService } from '../employee.service';
@@ -18,8 +18,27 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
   private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   protected readonly employees = this.employeeService.employees;
+  protected readonly attendance = this.employeeService.attendance;
+  private readonly today = new Date().toISOString().slice(0, 10);
+  protected readonly todayAttendance = computed(() => {
+    const presentIds = new Set(this.attendance()
+      .filter((record) => record.date === this.today && (record.status === 'Present' || record.status === 'Late' || record.status === 'Half Day'))
+      .map((record) => record.employeeId));
+    return {
+      present: this.employees().filter((employee) => presentIds.has(employee.id)),
+      absent: this.employees().filter((employee) => employee.status !== 'On Leave' && !presentIds.has(employee.id) && this.isPastShiftGrace(employee))
+    };
+  });
+  protected readonly employeesOnLeave = computed(() => this.employees().filter((employee) => employee.status === 'On Leave'));
+  protected readonly birthdaysToday = computed(() => this.employees().filter((employee) => this.isBirthdayToday(employee.birthDate)));
+  protected readonly upcomingBirthdays = computed(() => this.employees()
+    .filter((employee) => employee.birthDate && !this.isBirthdayToday(employee.birthDate))
+    .map((employee) => ({ employee, daysUntil: this.daysUntilBirthday(employee.birthDate!) }))
+    .filter(({ daysUntil }) => daysUntil <= 90)
+    .sort((first, second) => first.daysUntil - second.daysUntil));
   protected filterStatus: string | null = null;
   protected editingId: number | null = null;
+  protected showForm = false;
   protected errorMessage: WritableSignal<string> = signal('');
   protected readonly successMessage: WritableSignal<string> = signal('');
   protected form: Omit<Employee, 'id'> = {
@@ -27,6 +46,9 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
     role: '',
     department: '',
     email: '',
+    birthDate: '',
+    shiftStart: '09:00',
+    shiftEnd: '18:00',
     status: 'Active'
   };
 
@@ -41,6 +63,10 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.queryParamMap.subscribe((params) => {
       this.filterStatus = params.get('status');
+      if (params.get('action') === 'add') {
+        this.resetForm();
+        this.showForm = true;
+      }
     });
   }
 
@@ -82,11 +108,13 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
     }
 
     this.resetForm();
+    this.showForm = false;
   }
 
   protected editEmployee(employee: Employee): void {
     this.editingId = employee.id;
     this.form = { ...employee };
+    this.showForm = true;
   }
 
   protected deleteEmployee(id: number): void {
@@ -102,6 +130,9 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
       role: '',
       department: '',
       email: '',
+      birthDate: '',
+      shiftStart: '09:00',
+      shiftEnd: '18:00',
       status: 'Active'
     };
   }
@@ -127,12 +158,43 @@ export class EmployeeManagementComponent implements OnInit, OnDestroy {
     return emailPattern.test(email.trim());
   }
 
+  protected closeForm(): void {
+    this.resetForm();
+    this.showForm = false;
+  }
+
+  protected birthdayLabel(birthDate: string): string {
+    return new Date(`${birthDate}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  }
+
+  protected employeeCode(id: number): string {
+    return `YH${String(id).padStart(3, '0')}`;
+  }
+
+  private isPastShiftGrace(employee: Employee): boolean {
+    const [hours, minutes] = (employee.shiftStart || '09:00').split(':').map(Number);
+    const cutoff = new Date();
+    cutoff.setHours(hours, minutes + 15, 0, 0);
+    return new Date() > cutoff;
+  }
+
+  private isBirthdayToday(birthDate: string | undefined): boolean {
+    return !!birthDate && birthDate.slice(5) === this.today.slice(5);
+  }
+
+  private daysUntilBirthday(birthDate: string): number {
+    const today = new Date(`${this.today}T00:00:00`);
+    const birthday = new Date(`${today.getFullYear()}-${birthDate.slice(5)}T00:00:00`);
+    if (birthday < today) birthday.setFullYear(today.getFullYear() + 1);
+    return Math.round((birthday.getTime() - today.getTime()) / 86400000);
+  }
+
   private scheduleErrorClear(): void {
     this.clearErrorTimeout();
     this.errorTimeoutId = window.setTimeout(() => {
       this.errorMessage.set('');
       this.errorTimeoutId = null;
-    }, 5000);
+    }, 4000);
   }
 
   private clearErrorTimeout(): void {

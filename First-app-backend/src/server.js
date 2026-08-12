@@ -9,16 +9,32 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
 const seedEmployees = [
-  { id: 1, name: 'Ava Carter', role: 'Project Manager', department: 'Operations', email: 'ava.carter@company.com', status: 'Active' },
-  { id: 2, name: 'Noah Brooks', role: 'Frontend Developer', department: 'Engineering', email: 'noah.brooks@company.com', status: 'Remote' },
-  { id: 3, name: 'Emma Walker', role: 'HR Specialist', department: 'People Ops', email: 'emma.walker@company.com', status: 'Active' }
+  { id: 1, name: 'Ava Carter', role: 'Project Manager', department: 'Operations', email: 'ava.carter@company.com', birthDate: '1991-08-12', shiftStart: '09:00', shiftEnd: '18:00', status: 'Active' },
+  { id: 2, name: 'Noah Brooks', role: 'Frontend Developer', department: 'Engineering', email: 'noah.brooks@company.com', birthDate: '1994-08-18', shiftStart: '09:00', shiftEnd: '18:00', status: 'Remote' },
+  { id: 3, name: 'Emma Walker', role: 'HR Specialist', department: 'People Ops', email: 'emma.walker@company.com', birthDate: '1992-09-03', shiftStart: '09:30', shiftEnd: '18:30', status: 'Active' }
 ];
 
-const seedAttendance = [
-  { id: 1, employeeId: 1, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T08:57:00.000Z', clockOut: '2026-08-05T17:12:00.000Z' },
-  { id: 2, employeeId: 2, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T09:04:00.000Z', clockOut: '2026-08-05T17:36:00.000Z' },
-  { id: 3, employeeId: 3, date: '2026-08-05', status: 'Late', clockIn: '2026-08-05T09:42:00.000Z', clockOut: '2026-08-05T18:01:00.000Z' }
-];
+function buildDemoAttendance() {
+  const records = [];
+  const cursor = new Date(2026, 6, 1);
+  const end = new Date();
+  let id = 1;
+  let workday = 0;
+  while (cursor <= end) {
+    if (cursor.getDay() !== 0 && cursor.getDay() !== 6) {
+      const date = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+      const timestamp = (time) => `${date}T${time}:00.000Z`;
+      records.push({ id: id++, employeeId: 1, date, status: 'Present', clockIn: timestamp('08:55'), clockOut: timestamp('17:30') });
+      records.push({ id: id++, employeeId: 2, date, status: workday % 5 === 0 ? 'Late' : 'Present', clockIn: timestamp(workday % 5 === 0 ? '09:20' : '08:58'), clockOut: timestamp('17:35') });
+      records.push({ id: id++, employeeId: 3, date, status: workday % 7 === 0 ? 'Absent' : 'Present', clockIn: workday % 7 === 0 ? null : timestamp('09:20'), clockOut: workday % 7 === 0 ? null : timestamp('18:10') });
+      workday++;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return records;
+}
+
+const seedAttendance = buildDemoAttendance();
 
 const seedTasks = [
   { id: 1, employeeId: 1, title: 'Review project priorities', detail: 'Prepare the operations update for the team meeting.', dueDate: '2026-08-12', status: 'Pending', startedAt: null, completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null },
@@ -98,9 +114,28 @@ async function initializeDatabase() {
         role VARCHAR(120) NOT NULL,
         department VARCHAR(120) NOT NULL,
         email VARCHAR(120) NOT NULL,
+        phone VARCHAR(40),
+        birth_date DATE,
+        shift_start TIME NOT NULL DEFAULT '09:00',
+        shift_end TIME NOT NULL DEFAULT '18:00',
+        password VARCHAR(255) NOT NULL DEFAULT 'employee123',
         status VARCHAR(30) NOT NULL
       );
     `);
+    await pool.query('ALTER TABLE employees ADD COLUMN IF NOT EXISTS phone VARCHAR(40)');
+    await pool.query('ALTER TABLE employees ADD COLUMN IF NOT EXISTS birth_date DATE');
+    await pool.query(`
+      UPDATE employees SET birth_date = CASE email
+        WHEN 'ava.carter@company.com' THEN '1991-08-12'
+        WHEN 'noah.brooks@company.com' THEN '1994-08-18'
+        WHEN 'emma.walker@company.com' THEN '1992-09-03'
+        ELSE birth_date
+      END
+      WHERE birth_date IS NULL
+    `);
+    await pool.query("ALTER TABLE employees ADD COLUMN IF NOT EXISTS shift_start TIME NOT NULL DEFAULT '09:00'");
+    await pool.query("ALTER TABLE employees ADD COLUMN IF NOT EXISTS shift_end TIME NOT NULL DEFAULT '18:00'");
+    await pool.query("ALTER TABLE employees ADD COLUMN IF NOT EXISTS password VARCHAR(255) NOT NULL DEFAULT 'employee123'");
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS attendance (
@@ -141,12 +176,12 @@ async function initializeDatabase() {
     const { rows } = await pool.query('SELECT COUNT(*)::int AS count FROM employees');
     if (rows[0].count === 0) {
       await pool.query(
-        `INSERT INTO employees (name, role, department, email, status)
-         VALUES ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10), ($11, $12, $13, $14, $15)`,
+        `INSERT INTO employees (name, role, department, email, birth_date, status)
+         VALUES ($1, $2, $3, $4, $5, $6), ($7, $8, $9, $10, $11, $12), ($13, $14, $15, $16, $17, $18)`,
         [
-          'Ava Carter', 'Project Manager', 'Operations', 'ava.carter@company.com', 'Active',
-          'Noah Brooks', 'Frontend Developer', 'Engineering', 'noah.brooks@company.com', 'Remote',
-          'Emma Walker', 'HR Specialist', 'People Ops', 'emma.walker@company.com', 'Active'
+          'Ava Carter', 'Project Manager', 'Operations', 'ava.carter@company.com', '1991-08-12', 'Active',
+          'Noah Brooks', 'Frontend Developer', 'Engineering', 'noah.brooks@company.com', '1994-08-18', 'Remote',
+          'Emma Walker', 'HR Specialist', 'People Ops', 'emma.walker@company.com', '1992-09-03', 'Active'
         ]
       );
 
@@ -154,6 +189,35 @@ async function initializeDatabase() {
         `INSERT INTO attendance (employee_id, date, status, clock_in, clock_out)
          VALUES ($1, $2, $3, $4, $5), ($6, $7, $8, $9, $10), ($11, $12, $13, $14, $15)`,
         [1, '2026-08-05', 'Present', '2026-08-05T08:57:00Z', '2026-08-05T17:12:00Z', 2, '2026-08-05', 'Present', '2026-08-05T09:04:00Z', '2026-08-05T17:36:00Z', 3, '2026-08-05', 'Late', '2026-08-05T09:42:00Z', '2026-08-05T18:01:00Z']
+      );
+    }
+
+    await pool.query(`
+      INSERT INTO employees (name, role, department, email, birth_date, shift_start, shift_end, status)
+      SELECT $1, $2, $3, $4, $5, $6, $7, $8
+      WHERE NOT EXISTS (SELECT 1 FROM employees WHERE email = $4)
+    `, ['Liam Phillips', 'QA Engineer', 'Engineering', 'liam.phillips@company.com', '1990-10-22', '09:00', '18:00', 'On Leave']);
+    await pool.query(`
+      INSERT INTO employees (name, role, department, email, birth_date, shift_start, shift_end, status)
+      SELECT $1, $2, $3, $4, $5, $6, $7, $8
+      WHERE NOT EXISTS (SELECT 1 FROM employees WHERE email = $4)
+    `, ['Sophia Turner', 'Business Analyst', 'Sales', 'sophia.turner@company.com', '1995-12-07', '10:00', '19:00', 'Active']);
+    await pool.query(`
+      INSERT INTO employees (name, role, department, email, birth_date, shift_start, shift_end, status)
+      SELECT $1, $2, $3, $4, $5, $6, $7, $8
+      WHERE NOT EXISTS (SELECT 1 FROM employees WHERE email = $4)
+    `, ['Mason Reed', 'Backend Developer', 'Engineering', 'mason.reed@company.com', '1993-01-15', '09:00', '18:00', 'Remote']);
+
+    const employeeRows = await pool.query('SELECT id, email FROM employees');
+    const employeeIds = new Map(employeeRows.rows.map((employee) => [employee.email, employee.id]));
+    const emailsBySeedId = { 1: 'ava.carter@company.com', 2: 'noah.brooks@company.com', 3: 'emma.walker@company.com' };
+    for (const record of seedAttendance) {
+      const employeeId = employeeIds.get(emailsBySeedId[record.employeeId]);
+      if (!employeeId) continue;
+      await pool.query(
+        `INSERT INTO attendance (employee_id, date, status, clock_in, clock_out)
+         VALUES ($1, $2, $3, $4, $5) ON CONFLICT (employee_id, date) DO NOTHING`,
+        [employeeId, record.date, record.status, record.clockIn, record.clockOut]
       );
     }
 
@@ -181,7 +245,7 @@ async function getEmployees() {
     return seedEmployees;
   }
 
-  const result = await pool.query('SELECT * FROM employees ORDER BY id');
+  const result = await pool.query('SELECT id, name, role, department, email, phone, password, birth_date AS "birthDate", shift_start::text AS "shiftStart", shift_end::text AS "shiftEnd", status FROM employees ORDER BY id');
   return result.rows;
 }
 
@@ -260,13 +324,14 @@ app.put('/api/tasks/:id', async (req, res) => {
 });
 
 app.post('/api/attendance/clock', async (req, res) => {
-  const { employeeId, clockIn } = req.body;
+  const { employeeId, clockIn, status = 'Present' } = req.body;
   const now = new Date().toISOString();
   const date = now.slice(0, 10);
 
   if (!pool || !databaseReady) {
     const index = seedAttendance.findIndex((record) => record.employeeId === Number(employeeId) && record.date === date);
-    const record = index >= 0 ? { ...seedAttendance[index] } : { id: Date.now(), employeeId: Number(employeeId), date, status: 'Present', clockIn: null, clockOut: null };
+    const record = index >= 0 ? { ...seedAttendance[index] } : { id: Date.now(), employeeId: Number(employeeId), date, status, clockIn: null, clockOut: null };
+    record.status = status;
     if (clockIn) record.clockIn = now;
     else record.clockOut = now;
     if (index >= 0) seedAttendance[index] = record;
@@ -276,13 +341,13 @@ app.post('/api/attendance/clock', async (req, res) => {
 
   const result = await pool.query(
     `INSERT INTO attendance (employee_id, date, status, clock_in, clock_out)
-     VALUES ($1, $2, 'Present', CASE WHEN $3 THEN $4 ELSE NULL END, CASE WHEN $3 THEN NULL ELSE $4 END)
+     VALUES ($1, $2, $3, CASE WHEN $4 THEN $5 ELSE NULL END, CASE WHEN $4 THEN NULL ELSE $5 END)
      ON CONFLICT (employee_id, date) DO UPDATE SET
-       clock_in = CASE WHEN $3 THEN EXCLUDED.clock_in ELSE attendance.clock_in END,
-       clock_out = CASE WHEN $3 THEN NULL ELSE EXCLUDED.clock_out END,
-       status = 'Present'
+       clock_in = CASE WHEN $4 THEN EXCLUDED.clock_in ELSE attendance.clock_in END,
+       clock_out = CASE WHEN $4 THEN NULL ELSE EXCLUDED.clock_out END,
+       status = EXCLUDED.status
      RETURNING id, employee_id AS "employeeId", date, status, clock_in AS "clockIn", clock_out AS "clockOut"`,
-    [employeeId, date, Boolean(clockIn), now]
+    [employeeId, date, status, Boolean(clockIn), now]
   );
   res.json(result.rows[0]);
 });
@@ -299,10 +364,10 @@ app.post('/api/employees', async (req, res) => {
   }
 
   const result = await pool.query(
-    `INSERT INTO employees (name, role, department, email, status)
-     VALUES ($1, $2, $3, $4, $5)
-     RETURNING *`,
-    [employee.name, employee.role, employee.department, employee.email, employee.status]
+    `INSERT INTO employees (name, role, department, email, phone, birth_date, shift_start, shift_end, password, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     RETURNING id, name, role, department, email, phone, password, birth_date AS "birthDate", shift_start::text AS "shiftStart", shift_end::text AS "shiftEnd", status`,
+      [employee.name, employee.role, employee.department, employee.email, employee.phone ?? null, employee.birthDate || null, employee.shiftStart || '09:00', employee.shiftEnd || '18:00', employee.password ?? 'employee123', employee.status]
   );
 
   res.status(201).json(result.rows[0]);
@@ -323,10 +388,10 @@ app.put('/api/employees/:id', async (req, res) => {
 
   const result = await pool.query(
     `UPDATE employees
-     SET name = $1, role = $2, department = $3, email = $4, status = $5
-     WHERE id = $6
-     RETURNING *`,
-    [companyEmployee.name, companyEmployee.role, companyEmployee.department, companyEmployee.email, companyEmployee.status, id]
+     SET name = $1, role = $2, department = $3, email = $4, phone = $5, birth_date = $6, shift_start = $7, shift_end = $8, password = $9, status = $10
+     WHERE id = $11
+     RETURNING id, name, role, department, email, phone, password, birth_date AS "birthDate", shift_start::text AS "shiftStart", shift_end::text AS "shiftEnd", status`,
+      [companyEmployee.name, companyEmployee.role, companyEmployee.department, companyEmployee.email, companyEmployee.phone ?? null, companyEmployee.birthDate || null, companyEmployee.shiftStart || '09:00', companyEmployee.shiftEnd || '18:00', companyEmployee.password ?? 'employee123', companyEmployee.status, id]
   );
 
   res.json(result.rows[0]);

@@ -21,10 +21,25 @@ export class EmployeeDashboardComponent implements OnInit, OnDestroy {
 
   protected get currentRecord(): AttendanceRecord | undefined {
     const today = new Date().toISOString().slice(0, 10);
-    return this.attendance().find((record) => record.employeeId === this.employeeId && record.date === today);
+    const record = this.attendance().find((item) => item.employeeId === this.employeeId && item.date === today);
+    if (record) return record;
+    const shiftStart = this.employeeDetails?.shiftStart ?? '09:00';
+    const [hours, minutes] = shiftStart.split(':').map(Number);
+    const cutoff = new Date();
+    cutoff.setHours(hours, minutes + 15, 0, 0);
+    return new Date() > cutoff
+      ? { id: 0, employeeId: this.employeeId, date: today, status: 'Absent', clockIn: null, clockOut: null }
+      : undefined;
   }
 
   protected get employeeDetails() { return this.employee().find((item) => item.id === this.employeeId); }
+  protected get isBirthdayToday(): boolean {
+    const birthDate = this.employeeDetails?.birthDate;
+    if (!birthDate) return false;
+    const birthday = new Date(birthDate);
+    const today = new Date();
+    return birthday.getMonth() === today.getMonth() && birthday.getDate() === today.getDate();
+  }
   protected get isClockedIn(): boolean { return !!this.currentRecord?.clockIn && !this.currentRecord.clockOut; }
   protected get elapsedSeconds(): number {
     if (!this.currentRecord?.clockIn) return 0;

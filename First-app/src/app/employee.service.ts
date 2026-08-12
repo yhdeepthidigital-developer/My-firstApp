@@ -9,6 +9,11 @@ export interface Employee {
   role: string;
   department: string;
   email: string;
+  phone?: string;
+  password?: string;
+  birthDate?: string;
+  shiftStart?: string;
+  shiftEnd?: string;
   status: 'Active' | 'On Leave' | 'Remote';
 }
 
@@ -16,7 +21,7 @@ export interface AttendanceRecord {
   id: number;
   employeeId: number;
   date: string;
-  status: 'Present' | 'Absent' | 'Late' | 'Holiday';
+  status: 'Present' | 'Absent' | 'Late' | 'Half Day' | 'Holiday';
   clockIn: string | null;
   clockOut: string | null;
 }
@@ -27,6 +32,17 @@ export interface LeaveRequest {
   employeeName: string;
   startDate: string;
   endDate: string;
+  reason: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+}
+
+export interface ShiftChangeRequest {
+  id: number;
+  employeeId: number;
+  employeeName: string;
+  currentShift: string;
+  requestedStart: string;
+  requestedEnd: string;
   reason: string;
   status: 'Pending' | 'Approved' | 'Rejected';
 }
@@ -50,26 +66,37 @@ export type NewTask = Pick<Task, 'employeeId' | 'title' | 'detail' | 'dueDate'> 
 };
 
 const seedEmployees: Employee[] = [
-  { id: 1, name: 'Ava Carter', role: 'Project Manager', department: 'Operations', email: 'ava.carter@company.com', status: 'Active' },
-  { id: 2, name: 'Noah Brooks', role: 'Frontend Developer', department: 'Engineering', email: 'noah.brooks@company.com', status: 'Remote' },
-  { id: 3, name: 'Emma Walker', role: 'HR Specialist', department: 'People Ops', email: 'emma.walker@company.com', status: 'Active' },
-  { id: 4, name: 'Liam Phillips', role: 'QA Engineer', department: 'Engineering', email: 'liam.phillips@company.com', status: 'On Leave' },
-  { id: 5, name: 'Sophia Turner', role: 'Business Analyst', department: 'Sales', email: 'sophia.turner@company.com', status: 'Active' },
-  { id: 6, name: 'Mason Reed', role: 'Backend Developer', department: 'Engineering', email: 'mason.reed@company.com', status: 'Remote' }
+  { id: 1, name: 'Ava Carter', role: 'Project Manager', department: 'Operations', email: 'ava.carter@company.com', birthDate: '1991-08-12', shiftStart: '09:00', shiftEnd: '18:00', status: 'Active' },
+  { id: 2, name: 'Noah Brooks', role: 'Frontend Developer', department: 'Engineering', email: 'noah.brooks@company.com', birthDate: '1994-08-18', shiftStart: '09:00', shiftEnd: '18:00', status: 'Remote' },
+  { id: 3, name: 'Emma Walker', role: 'HR Specialist', department: 'People Ops', email: 'emma.walker@company.com', birthDate: '1992-09-03', shiftStart: '09:30', shiftEnd: '18:30', status: 'Active' },
+  { id: 4, name: 'Liam Phillips', role: 'QA Engineer', department: 'Engineering', email: 'liam.phillips@company.com', birthDate: '1990-10-22', shiftStart: '09:00', shiftEnd: '18:00', status: 'On Leave' },
+  { id: 5, name: 'Sophia Turner', role: 'Business Analyst', department: 'Sales', email: 'sophia.turner@company.com', birthDate: '1995-12-07', shiftStart: '10:00', shiftEnd: '19:00', status: 'Active' },
+  { id: 6, name: 'Mason Reed', role: 'Backend Developer', department: 'Engineering', email: 'mason.reed@company.com', birthDate: '1993-01-15', shiftStart: '09:00', shiftEnd: '18:00', status: 'Remote' }
 ];
 
-const seedAttendance: AttendanceRecord[] = [
-  { id: 1, employeeId: 1, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T08:57:00.000Z', clockOut: '2026-08-05T17:12:00.000Z' },
-  { id: 2, employeeId: 2, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T09:04:00.000Z', clockOut: '2026-08-05T17:36:00.000Z' },
-  { id: 3, employeeId: 3, date: '2026-08-05', status: 'Late', clockIn: '2026-08-05T09:42:00.000Z', clockOut: '2026-08-05T18:01:00.000Z' },
-  { id: 4, employeeId: 4, date: '2026-08-05', status: 'Absent', clockIn: null, clockOut: null },
-  { id: 5, employeeId: 5, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T08:49:00.000Z', clockOut: '2026-08-05T17:05:00.000Z' },
-  { id: 6, employeeId: 6, date: '2026-08-05', status: 'Present', clockIn: '2026-08-05T09:00:00.000Z', clockOut: '2026-08-05T17:22:00.000Z' },
-  { id: 7, employeeId: 1, date: '2026-08-04', status: 'Present', clockIn: null, clockOut: null },
-  { id: 8, employeeId: 2, date: '2026-08-04', status: 'Late', clockIn: null, clockOut: null },
-  { id: 9, employeeId: 3, date: '2026-08-04', status: 'Holiday', clockIn: null, clockOut: null },
-  { id: 10, employeeId: 4, date: '2026-08-04', status: 'Absent', clockIn: null, clockOut: null }
-];
+function buildDemoAttendance(): AttendanceRecord[] {
+  const records: AttendanceRecord[] = [];
+  const cursor = new Date(2026, 6, 1);
+  const end = new Date();
+  let id = 1;
+  let workday = 0;
+  while (cursor <= end) {
+    if (cursor.getDay() !== 0 && cursor.getDay() !== 6) {
+      const date = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}-${String(cursor.getDate()).padStart(2, '0')}`;
+      const timestamp = (time: string) => `${date}T${time}:00.000Z`;
+      records.push({ id: id++, employeeId: 1, date, status: 'Present', clockIn: timestamp('08:55'), clockOut: timestamp('17:30') });
+      records.push({ id: id++, employeeId: 2, date, status: workday % 5 === 0 ? 'Late' : 'Present', clockIn: timestamp(workday % 5 === 0 ? '09:20' : '08:58'), clockOut: timestamp('17:35') });
+      records.push({ id: id++, employeeId: 3, date, status: workday % 7 === 0 ? 'Absent' : 'Present', clockIn: workday % 7 === 0 ? null : timestamp('09:20'), clockOut: workday % 7 === 0 ? null : timestamp('18:10') });
+      records.push({ id: id++, employeeId: 5, date, status: 'Present', clockIn: timestamp('09:52'), clockOut: timestamp('18:55') });
+      records.push({ id: id++, employeeId: 6, date, status: workday % 6 === 0 ? 'Absent' : 'Present', clockIn: workday % 6 === 0 ? null : timestamp('08:57'), clockOut: workday % 6 === 0 ? null : timestamp('17:40') });
+      workday++;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return records;
+}
+
+const seedAttendance: AttendanceRecord[] = buildDemoAttendance();
 
 const seedTasks: Task[] = [
   { id: 1, employeeId: 1, title: 'Review project priorities', detail: 'Prepare the operations update for the team meeting.', dueDate: '2026-08-12', status: 'Pending', startedAt: null, completedAt: null, durationMinutes: null, attachmentName: null, attachmentData: null },
@@ -90,6 +117,9 @@ export class EmployeeService {
   readonly attendance = signal<AttendanceRecord[]>(seedAttendance);
   readonly tasks = signal<Task[]>(seedTasks);
   readonly leaveRequests = signal<LeaveRequest[]>(seedLeaveRequests);
+  readonly shiftChangeRequests = signal<ShiftChangeRequest[]>([]);
+  private readonly notificationsRead = signal(false);
+  readonly pendingNotificationCount = computed(() => this.notificationsRead() ? 0 : this.leaveRequests().filter((request) => request.status === 'Pending').length + this.shiftChangeRequests().filter((request) => request.status === 'Pending').length);
   readonly totals = computed(() => {
     const currentEmployees = this.employees();
     return {
@@ -103,6 +133,9 @@ export class EmployeeService {
   constructor() {
     this.loadAll();
   }
+
+  markNotificationsRead(): void { this.notificationsRead.set(true); }
+  markNotificationsUnread(): void { this.notificationsRead.set(false); }
 
   private readonly apiBaseUrl = `${environment.apiUrl}/api`;
 
@@ -158,11 +191,17 @@ export class EmployeeService {
     const now = new Date().toISOString();
     const date = now.slice(0, 10);
     const existingRecord = this.attendance().find((record) => record.employeeId === employeeId && record.date === date);
+    const employee = this.employees().find((item) => item.id === employeeId);
+    const scheduledStart = employee?.shiftStart ?? '09:00';
+    const [hours, minutes] = scheduledStart.split(':').map(Number);
+    const shiftStart = new Date();
+    shiftStart.setHours(hours, minutes + 15, 0, 0);
+    const status = clockIn && new Date() > shiftStart ? 'Half Day' : existingRecord?.status ?? 'Present';
     const fallbackRecord: AttendanceRecord = {
       id: existingRecord?.id ?? Date.now(),
       employeeId,
       date,
-      status: 'Present',
+      status,
       clockIn: clockIn ? now : existingRecord?.clockIn ?? null,
       clockOut: clockIn ? null : now
     };
@@ -173,7 +212,7 @@ export class EmployeeService {
       return current.map((item, index) => index === existing ? fallbackRecord : item);
     });
 
-    this.http.post<AttendanceRecord>(`${this.apiBaseUrl}/attendance/clock`, { employeeId, clockIn }).pipe(
+    this.http.post<AttendanceRecord>(`${this.apiBaseUrl}/attendance/clock`, { employeeId, clockIn, status }).pipe(
       catchError(() => of(fallbackRecord))
     ).subscribe((record) => {
       this.attendance.update((current) => {
@@ -229,7 +268,12 @@ export class EmployeeService {
       role: payload?.role ?? fallbackEmployee.role,
       department: payload?.department ?? fallbackEmployee.department,
       email: payload?.email ?? fallbackEmployee.email,
-      status: payload?.status ?? fallbackEmployee.status
+        phone: payload?.phone ?? fallbackEmployee.phone ?? '',
+        password: payload?.password ?? fallbackEmployee.password ?? 'employee123',
+        birthDate: payload?.birthDate ?? fallbackEmployee.birthDate ?? '',
+        shiftStart: payload?.shiftStart ?? fallbackEmployee.shiftStart ?? '09:00',
+        shiftEnd: payload?.shiftEnd ?? fallbackEmployee.shiftEnd ?? '18:00',
+        status: payload?.status ?? fallbackEmployee.status
     };
   }
 
