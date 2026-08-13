@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { EmployeeService } from './employee.service';
 
 @Component({
@@ -18,17 +19,31 @@ export class App {
   protected readonly leaveRequests = this.employeeService.leaveRequests;
   protected readonly shiftRequests = this.employeeService.shiftChangeRequests;
   protected notificationsOpen = false;
+  private readonly currentUrl = signal(this.router.url);
+
+  constructor() {
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => this.currentUrl.set(this.router.url));
+  }
 
   protected openNotifications(): void {
     this.notificationsOpen = !this.notificationsOpen;
     if (this.notificationsOpen) this.employeeService.markNotificationsRead();
   }
 
+  private get isAuthRoute(): boolean {
+    const url = this.currentUrl().split('?')[0];
+    return url === '/login' || url === '/employee-login';
+  }
+
   protected get isLoggedIn(): boolean {
+    if (this.isAuthRoute) return false;
     return localStorage.getItem('userRole') === 'admin' || localStorage.getItem('adminLoggedIn') === 'true';
   }
 
   protected get isEmployee(): boolean {
+    if (this.isAuthRoute) return false;
     return localStorage.getItem('userRole') === 'employee';
   }
 
